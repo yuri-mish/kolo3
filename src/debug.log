@@ -1,0 +1,50 @@
+[1223/085322.686:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[1223/125821.462:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/125821.467:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.283:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.283:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.284:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.284:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.284:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.284:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.285:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/131124.285:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/132624.288:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/132624.289:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/134124.290:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/134124.290:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/135624.290:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/135624.290:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/141124.292:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/141124.292:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/142624.293:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/142624.293:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/144124.294:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/144124.294:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/152722.702:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/152722.702:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/154222.703:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/154222.703:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/155722.704:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/155722.704:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/161222.704:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/161222.704:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/162722.708:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/162722.708:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/164222.709:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/164222.710:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/165638.079:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/165638.080:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/170638.083:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/170638.084:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1223/170638.086:ERROR:filesystem_win.cc(116)] GetFileAttributes C:\Users\Prog1C\AppData\Local\Temp\.profile\Crashpad\reports\b62077df-6b6e-4192-ba49-85540bc56d73.dmp: Не удается найти указанный файл. (0x2)
+[1223/170638.087:ERROR:filesystem_win.cc(116)] GetFileAttributes C:\Users\Prog1C\AppData\Local\Temp\.profile\Crashpad\reports\99343a6a-af65-469c-b582-b8122b0e7321.dmp: Не удается найти указанный файл. (0x2)
+[1223/170638.088:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[1224/125107.102:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[1224/145605.338:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1224/154057.331:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1224/155557.336:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1224/161057.336:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1224/162557.339:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1224/164057.344:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[1224/165557.351:ERROR:crash_report_database_win.cc(496)] failed to stat report
