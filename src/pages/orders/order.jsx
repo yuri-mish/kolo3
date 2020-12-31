@@ -2,13 +2,13 @@ import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import { TextBox, DateBox, Menu } from "devextreme-react";
-import Toolbar, { Item } from 'devextreme-react/toolbar';
+import Toolbar, { Item } from "devextreme-react/toolbar";
 import { locale } from "devextreme/localization";
 import moment from "moment";
+//import {lodash as _ } from "lodash"
 //import Lookup from "devextreme-react/lookup";
-
 //import { RemoteOperations } from "devextreme-react/data-grid";
-import { DropDownBox} from "devextreme-react/drop-down-box";
+import { DropDownBox } from "devextreme-react/drop-down-box";
 import DataGrid, {
   Selection,
   Paging,
@@ -22,12 +22,16 @@ import DataGrid, {
 
 import { partnerDataSource } from "./db/ds/dsPartners";
 import { nomsDataSource } from "./db/ds/dsNoms";
-import { useParams } from 'react-router-dom';
+import { useParams } from "react-router-dom";
+import  notify  from 'devextreme/ui/notify';
+import { useHistory } from 'react-router-dom';
 
+var _ = require('lodash');
 
 export const Order = (props) => {
+  const history = useHistory();
 
-  var rowData={}
+  var rowData = {};
 
   let { id } = useParams();
 
@@ -44,17 +48,19 @@ export const Order = (props) => {
   const load = () => {
     return fetch("http://localhost:4000/", {
       method: "POST",
-      credentials: 'include',
+      credentials: "include",
       body: JSON.stringify({
         query: `{buyers_orders(ref:"${id}",limit:1) {
                     _id
                     doc_amount
                     number_doc
                     date
-                    partner{
-                        ref
-                        name
-                    }
+                    partner{ref name}
+                    organization{ref name}
+                    ClientPerson
+                    ClientPersonPhone
+                    responsible {ref name}
+                    note
                     services {
                       nom {
                         _id
@@ -62,7 +68,7 @@ export const Order = (props) => {
                         name
                         name_full
                       }
-                      row price quantity amount discount_percent
+                      row price quantity amount discount_percent gos_code vin_code vat_rate vat_amount
                     }
                   }
                 }`,
@@ -77,7 +83,7 @@ export const Order = (props) => {
         return response.json();
       })
       .then((data) => {
-        if (data.data.buyers_orders.length > 0)
+        if (data.data.buyers_orders && data.data.buyers_orders.length > 0)
           setData(data.data.buyers_orders[0]);
         //totalCount: data.data.buyers_orders.length,
         //summary: response.summary,
@@ -85,12 +91,11 @@ export const Order = (props) => {
 
         // return ()
       });
-
   };
   useEffect(() => {
     load();
     return () => {};
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onValueChanged = (param) => {
@@ -103,158 +108,270 @@ export const Order = (props) => {
   locale("uk"); //!!!!+++
   console.log("=" + data.date);
 
-  const onQuantityChanged = (r)=>{
-    console.log('=99=',r);
-    console.log('=00=',rowData);
+  const onQuantityChanged = (r) => {
+    console.log("=99=", r);
+    console.log("=00=", rowData);
 
-    rowData.amount = rowData.price*r.srcElement.value;
+    rowData.amount = rowData.price * r.srcElement.value;
+    var doc_amount = 0;
+    data.services.forEach(r=>{doc_amount+= (r.row===rowData.row)?rowData.amount:r.amount})
     setData((prevState) => ({
       ...prevState,
-      services: prevState.services.map((row)=>{
-                if (row.row===rowData.row)
-                  return rowData
-                else return row  
-                })
-      
+      doc_amount:doc_amount,
+      services: prevState.services.map((row) => {
+        if (row.row === rowData.row) return rowData;
+        else return row;
+      }),
     }));
-    
-
-  }
+  };
 
   const addButtonOptions = {
-    icon: 'plus',
+    icon: "plus",
     onClick: () => {
- 
-      var st = data.services.slice() 
-      console.log('New row:',st)
-      st.push({row:(data.services.length+1),nom:{ref:undefined,name:'<послуга>'}})
+      var st = data.services.slice();
+      console.log("New row:", st);
+      st.push({
+        row: data.services.length + 1,
+        nom: { ref: undefined, name: "<послуга>" },
+      });
       setData((prevState) => ({
-      ...prevState,
-      services: st
-    }))}
+        ...prevState,
+        services: st,
+      }));
+    },
   };
 
   const deleteButtonOptions = {
-
-    icon: 'minus',
-    disabled:false,
+    icon: "minus",
+    disabled: false,
 
     onClick: () => {
-      
-      var st = data.services.filter(row=>row.row !== rowData?.row)
-      deleteButtonOptions.disabled = st.length === 0
-//      console.log('delete row:',st)
-      
-      setData((prevState) => ({
-      ...prevState,
-      services: st 
-    }))}
-  };
-  
+      var st = data.services.filter((row) => row.row !== rowData?.row);
+      deleteButtonOptions.disabled = st.length === 0;
+      //      console.log('delete row:',st)
 
+      setData((prevState) => ({
+        ...prevState,
+        services: st,
+      }));
+    },
+  };
+
+  function convertToText(obj) {
+    //create an array that will later be joined into a string.
+    var string = [];
+
+    //is object
+    //    Both arrays and objects seem to return "object"
+    //    when typeof(obj) is applied to them. So instead
+    //    I am checking to see if they have the property
+    //    join, which normal objects don't have but
+    //    arrays do.
+    if (obj === undefined || obj === null)  {
+      return String(obj);
+    } else if (typeof obj == "object" && obj.join === undefined) {
+      for (var prop in obj) {
+        if (obj.hasOwnProperty(prop))
+          string.push(prop + ": " + convertToText(obj[prop]));
+      }
+      return "{" + string.join(",") + "}";
+
+      //is array
+    } else if (typeof obj == "object" && !(obj.join === undefined)) {
+      for (prop in obj) {
+        string.push(convertToText(obj[prop]));
+      }
+      return "[" + string.join(",") + "]";
+
+      //is function
+    } else if (typeof obj == "function") {
+      string.push(obj.toString());
+
+      //all other values can be done with JSON.stringify
+    } else {
+      string.push(JSON.stringify(obj));
+    }
+
+    return string.join(",");
+  }
+
+  const showError = (message)=>{
+                    notify({message:message,position: { at: 'center'}}, "error", 5000);
+  }
+
+const changeReq = (e)=>{
+  setData((prevState) => ({
+      ...prevState,
+      [e.element.id]:e.event.target.value
+    
+    }));
+}
   return (
     <div>
+      <Menu
+        onItemClick={async e => {
+          if (e.itemData.id === "ok") {
+            var doctosave = _.cloneDeep(data)
+            doctosave.partner=doctosave.partner.ref  
+            doctosave.organization=doctosave.organization.ref  
+            if (doctosave.responsible) delete doctosave.responsible  
+            
+            doctosave.services.forEach(r=>{
+              return r.nom = r.nom.ref
+              })
+            const q = JSON.stringify({
+              query: `mutation{setBuyersOrder(input:${convertToText(doctosave)}) {
+                    _id
+                      }}`,
+            });
 
-<div style={{display:"flex"}}>
-           <div style={{display:"flex", paddingRight:"1rem"}}>
-           <TextBox value="Номер"></TextBox> 
-           <TextBox value={data.number_doc} placeholder="номер документа" />
-           </div> 
-           <TextBox value="Дата" ></TextBox>
-            <DateBox
-              id="date"
-              type="datetime"
-              //        min={this.minDate}
-              //                max={this.now}
-              //defaultValue ={Date.now()}
+            const response = await fetch("http://localhost:4000/", {
+              method: "POST",
+              credentials: "include",
+              body: q,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            console.log(response);
+            const datar = await response.json();
+            console.log(datar);
+            if (datar.errors) {
+              datar.errors.forEach(err => {
+                showError("Помилка запису: " + err.message);
+              });
+            }
+            else { history.goBack(); }
+          }
+          if (e.itemData.id === "close") {
+              history.goBack();
+          }
+          
+        }}
+        dataSource={[
+          {
+            id: "ok",
+            text: "Закрити і зберегти",
+          },
+          { id:"close",
+            text: "Закрити",
+          },
+          { 
+            text: "Зберегти", disabled:true
+          },
+          {
+            text: "Інше",
+            items: [
+              {
+                text: " інше 1",
+              },
+              {
+                text: "штше 2",
+              },
+            ],
+          },
+        ]}></Menu>
+      <div style={{ display: "flex" }}>
+        <div style={{ display: "flex", paddingRight: "1rem" }}>
+          <TextBox disabled={true} value="Номер"></TextBox>
+          <TextBox readOnly={true} value={data.number_doc} placeholder="номер документа" />
+        </div>
+        <TextBox value="Дата"></TextBox>
+        <DateBox
+          id="date"
+          type="datetime"
+          //        min={this.minDate}
+          //                max={this.now}
+          //defaultValue ={Date.now()}
 
-              value={
-                data.date
-                //                        data.date?Date.parse(data.date):Date.now()
-              }
-              displayFormat={"dd-MM-yyyy HH:mm:ss"}
-              useMaskBehavior={true}
-              onValueChanged={onValueChanged}
-              //                disabledDates={this.getDisabledDates}
-            />
-            </div>
-    
+          value={
+            data.date
+            //                        data.date?Date.parse(data.date):Date.now()
+          }
+          displayFormat={"dd-MM-yyyy HH:mm:ss"}
+          useMaskBehavior={true}
+          onValueChanged={onValueChanged}
+          //                disabledDates={this.getDisabledDates}
+        />
+      </div>
 
+      <div style={{ display: "flex", paddingTop: "1rem" }}>
+        <TextBox value="Контрагент"></TextBox>
 
-            <div style={{display:"flex", paddingTop:"1rem"}}>
-      
-            <TextBox value="Контрагент" ></TextBox>
-      
-            <DropDownBox  width="100%"
-              value={data.partner?.ref}
-              valueExpr="ref"
-              deferRendering={false}
-              displayExpr="name"
-              //              displayExpr={this.gridBox_displayExpr}
-              placeholder="контрагент ..."
-              showClearButton={false}
-              dataSource={partnerDataSource}
-              // onValueChanged={(e) => {
+        <DropDownBox
+          width="100%"
+          value={data.partner?.ref}
+          valueExpr="ref"
+          deferRendering={false}
+          displayExpr="name"
+          //              displayExpr={this.gridBox_displayExpr}
+          placeholder="контрагент ..."
+          showClearButton={false}
+          dataSource={partnerDataSource}
+          
+          // onValueChanged={(e) => {
 
-              //   console.log(e);
-              // }}
-              //             contentRender={dataGridRender}
-            >
-              <Menu
-                onItemClick={(e) => {
-                  console.log(e);
-                }}
-                dataSource={[
+          //   console.log(e);
+          // }}
+          //             contentRender={dataGridRender}
+        >
+        
+          <Menu
+            onItemClick={(e) => {
+              console.log(e);
+            }}
+            dataSource={[
+              {
+                text: "Вибрати",
+              },
+              {
+                text: "Додати",
+              },
+              {
+                text: "Закрити",
+              },
+              {
+                text: "Інше",
+                items: [
                   {
-                    text: "Вибрати",
+                    text: " інше 1",
                   },
                   {
-                    text: "Додати",
+                    text: "штше 2",
                   },
-                  {
-                    text: "Закрити",
-                  },
-                  {
-                    text: "Інше",
-                    items: [
-                      {
-                        text: " інше 1",
-                      },
-                      {
-                        text: "штше 2",
-                      },
-                    ],
-                  },
-                ]}></Menu>
+                ],
+              },
+            ]}></Menu>
 
-              <DataGrid
-                remoteOperations={true}
-                dataSource={partnerDataSource}
-                //      columns={["ref", "name", "edrpou"]}
-                hoverStateEnabled={true}
-                //selectedRowKeys={this.state.gridBoxValue}
-                onSelectionChanged={(e) => {
-                  setData((prevState) => ({
-                    ...prevState,
-                    partner: {
-                      ref: e.selectedRowsData[0].ref,
-                      name: e.selectedRowsData[0].name,
-                    },
-                  }));
-                  //console.log(e);
-                }}
-                height="90%">
-                <Selection mode="single" />
-                <Scrolling mode="infinite" />
-                <Paging enabled={true} pageSize={50} />
-                <FilterRow visible={true} />
-                <Column dataField="ref" visible={false} />
-                <Column dataField="name" caption="Назва" />
-                <Column dataField="edrpou" caption="код ЄДРПОУ" />
-              </DataGrid>
-            </DropDownBox>
-       </div>           
-      
+          <DataGrid
+            remoteOperations={true}
+            dataSource={partnerDataSource}
+            //      columns={["ref", "name", "edrpou"]}
+            hoverStateEnabled={true}
+            //selectedRowKeys={this.state.gridBoxValue}
+            onSelectionChanged={(e) => {
+              setData((prevState) => ({
+                ...prevState,
+                partner: {
+                  ref: e.selectedRowsData[0].ref,
+                  name: e.selectedRowsData[0].name,
+                },
+              }));
+              //console.log(e);
+            }}
+            height="90%">
+            
+            <Selection mode="single" />
+            <Scrolling mode="virtual" rowRenderingMode="virtual" />
+            <Paging enabled={true} pageSize={100} />
+            <FilterRow visible={true} />
+            <Column dataField="ref" visible={false} />
+            <Column dataField="name" caption="Назва" />
+            <Column dataField="edrpou" caption="код ЄДРПОУ" />
+          </DataGrid>
+        </DropDownBox>
+      </div>
+
       {/* <TextBox
         value={format(
           data.date ? Date.parse(data.date) : Date.now(),
@@ -263,103 +380,117 @@ export const Order = (props) => {
         placeholder="дата документа"
         mask="00-00-0000 00:00:00"
       /> */}
-      <div style={{paddingTop:"1rem"}}>
-      <Toolbar > 
-      <Item 
+      <div style={{ display: "flex" }}>
+      {/* <div style={{ display: "flex", paddingRight: "1rem" }}> */}
+      <TextBox value="Особа"></TextBox>
+          <TextBox  width= "80%" id="ClientPerson" value={data.ClientPerson} placeholder="контактана особа" onChange={changeReq}/>
+      {/* </div> */}
+          <div style={{ display: "flex", paddingRight: "1rem" }}>
+          <TextBox value="Телефон"></TextBox>
+          <TextBox id="ClientPersonPhone" value={data.ClientPersonPhone} placeholder="контактаний телефон" onChange={changeReq}/>
+        </div>
+        </div> 
+
+      <div style={{ paddingTop: "1rem" }}>
+        <Toolbar>
+          <Item
             location="before"
             locateInMenu="auto"
             widget="dxButton"
-            options={addButtonOptions} 
-       
-            />
-         
-             <Item text="Add"  locateInMenu="always"/>
-       </Toolbar>     
-      <DataGrid 
-       noDataText="Список порожній"
-        remoteOperations={false}
-        rowAlternationEnabled={true}
-        showBorders={true}
-        dataSource={data.services.slice()}
-        //      columns={["ref", "name", "edrpou"]}
-        hoverStateEnabled={true}
-        //activeStateEnabled = {true}
-        //selectedRowKeys={this.state.gridBoxValue}
-        onValueChanged={(e) => {
-          console.log('=999=',e)}}
-        onSelectionChanged={(e) => {
-          console.log('=9=',e);
-          setData((prevState) => ({
-            ...prevState,
-            partner: {
-              ref: e.selectedRowsData[0].ref,
-              name: e.selectedRowsData[0].name,
-            },
-          }))
-        }}
-          selectTextOnEditStart={true}
+            options={addButtonOptions}
+          />
 
-          onInitNewRow={e=>{
-        
-            var st = data.services.slice() 
-            console.log('New row:',st)
-            st.push({row:(data.services.length+1),nom:{ref:undefined,name:'<послуга>'}})
-            setData((prevState) => ({
-            ...prevState,
-            services: st
-            }))
+          <Item text="Add" locateInMenu="always" />
+        </Toolbar>
+        <DataGrid
+          noDataText="Список порожній"
+          remoteOperations={false}
+          rowAlternationEnabled={true}
+          showBorders={true}
+          dataSource={data.services.slice()}
+          //      columns={["ref", "name", "edrpou"]}
+          hoverStateEnabled={true}
+          //activeStateEnabled = {true}
+          //selectedRowKeys={this.state.gridBoxValue}
+          onValueChanged={(e) => {
+            console.log("=999=", e);
           }}
-          onEditorPrepared={(e)=>{
-            if (e.dataField === 'quantity') {
-                rowData = e.row.data;
-                e.editorElement.onchange = onQuantityChanged
-                console.log(e)
-          }}}
-          onRowRemoved={(e)=>{
-            console.log('Row remove',e) //+++
-            
-            var st = data.services.filter(row=>row.row !== e.data.row)
-            var i = 1
-            st.forEach(r=>{ r.row = i++ })
+          onSelectionChanged={(e) => {
+            console.log("=9=", e);
             setData((prevState) => ({
-            ...prevState,
-            services: st
-            }))
+              ...prevState,
+              partner: {
+                ref: e.selectedRowsData[0].ref,
+                name: e.selectedRowsData[0].name,
+              },
+            }));
+          }}
+          selectTextOnEditStart={true}
+          onInitNewRow={(e) => {
+            var st = data.services.slice();
+            console.log("New row:", st);
+            st.push({
+              row: data.services.length + 1,
+              nom: { ref: undefined, name: "<послуга>" },
+            });
+            setData((prevState) => ({
+              ...prevState,
+              services: st,
+            }));
+          }}
+          onEditorPrepared={(e) => {
+            if (e.dataField === "quantity") {
+              rowData = e.row.data;
+              e.editorElement.onchange = onQuantityChanged;
+              console.log(e);
+            }
+          }}
+          onRowRemoved={(e) => {
+            console.log("Row remove", e); //+++
 
-            }}
-        >
-        <Editing
-          mode="cell"
-          allowUpdating={true}
-          //allowAdding={true}
-          allowDeleting={true}
-          useIcons={true}
-        >
-                <Texts  confirmDeleteMessage="Вилучити?"  />
-
-         
-        </Editing>
-        
-        <Column
-          dataField="nom.ref"
-          caption="Номенклатура"
-          calculateDisplayValue={(data) => {
-            //                console.log(data) ;
-            return data.nom?.name;
+            var st = data.services.filter((row) => row.row !== e.data.row);
+            var i = 1;
+            st.forEach((r) => {
+              r.row = i++;
+            });
+            setData((prevState) => ({
+              ...prevState,
+              services: st,
+            }));
           }}>
-          <Lookup
-            dataSource={nomsDataSource}
-            valueExpr="ref"
-            displayExpr="name"
-            minSearchLength={3}
-            searchTimeout={500}></Lookup>
-        </Column>
-        <Column dataField="price" caption="Ціна" />
-        <Column dataField="quantity" caption="Кількість" />
-        <Column dataField="discount_percent" caption="%скидки" />
-        <Column dataField="amount" caption="Сума" />
-      </DataGrid>
+          <Editing
+            mode="cell"
+            allowUpdating={true}
+            //allowAdding={true}
+            allowDeleting={true}
+            useIcons={true}>
+            <Texts confirmDeleteMessage="Вилучити?" />
+          </Editing>
+
+          <Column
+            dataField="nom.ref"
+            caption="Номенклатура"
+            calculateDisplayValue={(data) => {
+              //                console.log(data) ;
+              return data.nom?.name;
+            }}>
+            <Lookup
+              dataSource={nomsDataSource}
+              valueExpr="ref"
+              displayExpr="name"
+              minSearchLength={3}
+              searchTimeout={500}></Lookup>
+          </Column>
+          <Column dataField="price" caption="Ціна" />
+          <Column dataField="quantity" caption="Кількість" />
+          <Column dataField="discount_percent" caption="%скидки" />
+          <Column dataField="amount" caption="Сума" />
+        </DataGrid>
       </div>
-</div> 
+      <div style={{ display: "flex", paddingRight: "1rem", width: "800" }}>
+      <TextBox  width= "20%" value="Коментар"></TextBox>
+          <TextBox  width= "80%"  id="note" value={data.note} placeholder="коментар" onChange={changeReq}/>
+      </div>
+    </div>
   );
 };
