@@ -25,6 +25,7 @@ import { nomsDataSource } from "./db/ds/dsNoms";
 import { useParams } from "react-router-dom";
 import  notify  from 'devextreme/ui/notify';
 import { useHistory } from 'react-router-dom';
+import { ChartTitleSubtitle } from "devextreme-react/chart";
 
 var _ = require('lodash');
 
@@ -44,6 +45,8 @@ export const Order = (props) => {
   };
 
   const [data, setData] = useState(OrderSchema);
+
+  const [prices, setPrices] = useState();
 
   const load = () => {
     return fetch("http://localhost:4000/", {
@@ -85,6 +88,7 @@ export const Order = (props) => {
       .then((data) => {
         if (data.data.buyers_orders && data.data.buyers_orders.length > 0)
           setData(data.data.buyers_orders[0]);
+          if (data.data.buyers_orders && data.data.buyers_orders[0] )loadPrices(data.data.buyers_orders[0].date)
         //totalCount: data.data.buyers_orders.length,
         //summary: response.summary,
         //groupCount: response.groupCount
@@ -92,8 +96,39 @@ export const Order = (props) => {
         // return ()
       });
   };
+
+  const loadPrices = async (date)=>{
+     
+    if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss")
+    const datePatam= `(date:"${date}")`
+    return fetch("http://localhost:4000/", {
+      method: "POST",
+      credentials: "include",
+      body: JSON.stringify({
+        query: `{prices ${datePatam} { nom price }}`,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      //              mode:"no-cors" ,
+    })
+      .then((response) => {
+        console.log(response);
+        return response.json();
+      })
+      .then((data) => {
+        var pr = []
+        if (data.data.prices && data.data.prices.length > 0)
+          pr = data.data.prices
+          setPrices(pr);
+          return pr
+      });
+  };
+
+  
   useEffect(() => {
     load();
+    loadPrices();
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -109,22 +144,48 @@ export const Order = (props) => {
   console.log("=" + data.date);
 
   const onQuantityChanged = (r) => {
-    console.log("=99=", r);
-    console.log("=00=", rowData);
+    calcrRow(rowData)
 
-    rowData.amount = rowData.price * r.srcElement.value;
-    var doc_amount = 0;
-    data.services.forEach(r=>{doc_amount+= (r.row===rowData.row)?rowData.amount:r.amount})
+  };
+
+  const calcrRow = (currentRowData) =>{
+    var doc_amount=0
+    currentRowData.amount = currentRowData.price * currentRowData.quantity;
+    if (isNaN(currentRowData.amount)) currentRowData.amount = 0
+    data.services.forEach(r=>{doc_amount+= (r.row===currentRowData.row)?currentRowData.amount:r.amount})
     setData((prevState) => ({
       ...prevState,
       doc_amount:doc_amount,
       services: prevState.services.map((row) => {
-        if (row.row === rowData.row) return rowData;
+        if (row.row === currentRowData.row) return currentRowData;
         else return row;
       }),
     }));
-  };
+    
+  }
+  const onchangeNom = (newData, value, currentRowData)=>{
+    console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData) 
+    var pricerow = prices.find((r)=>{return r.nom === value})
+    currentRowData.price = pricerow?pricerow.price:0
+    currentRowData.nom.ref = value
 
+    calcrRow(currentRowData)
+    
+    console.log('price=',currentRowData.price)
+  }
+
+  const onchangeDate = async (param)=>{
+    setData((prevState) => ({
+      ...prevState,
+      date: moment(param.value).format("YYYY-MM-DDTHH:mm:ss"),
+    }));
+    const newprice = await loadPrices(moment(param.value).format("YYYY-MM-DDTHH:mm:ss"))
+    data.services.forEach((row)=>{
+      var pricerow = newprice.find((priceRow)=>{return priceRow.nom === row.nom.ref})
+      row.price = pricerow?pricerow.price:0
+      calcrRow(row)
+    })
+  }
   const addButtonOptions = {
     icon: "plus",
     onClick: () => {
@@ -199,6 +260,86 @@ export const Order = (props) => {
                     notify({message:message,position: { at: 'center'}}, "error", 5000);
   }
 
+const cellTemplate = (r)=>{
+  return (
+    <div>
+  <DropDownBox
+  width="100%"
+  value={r.data.value}
+  valueExpr="ref"
+  deferRendering={false}
+  displayExpr="name"
+  //              displayExpr={this.gridBox_displayExpr}
+  placeholder="послуга ..."
+  showClearButton={false}
+  dataSource={nomsDataSource}
+  
+  // onValueChanged={(e) => {
+
+  //   console.log(e);
+  // }}
+  //             contentRender={dataGridRender}
+>
+
+  <Menu
+    onItemClick={(e) => {
+      console.log(e);
+    }}
+    dataSource={[
+      {
+        text: "Вибрати",
+      },
+      {
+        text: "Додати",
+      },
+      {
+        text: "Закрити",
+      },
+      {
+        text: "Інше",
+        items: [
+          {
+            text: " інше 1",
+          },
+          {
+            text: "штше 2",
+          },
+        ],
+      },
+    ]}></Menu>
+
+  <DataGrid
+   //remoteOperations={true}
+    dataSource={nomsDataSource}
+    //      columns={["ref", "name", "edrpou"]}
+    hoverStateEnabled={true}
+    //selectedRowKeys={this.state.gridBoxValue}
+    // onSelectionChanged={(e) => {
+    //   setData((prevState) => ({
+    //     ...prevState,
+    //     partner: {
+    //       ref: e.selectedRowsData[0].ref,
+    //       name: e.selectedRowsData[0].name,
+    //     },
+    //   }));
+      //console.log(e);
+    //}}
+    width="1000px"
+    height="90%">
+    
+    <Selection mode="single" />
+    <Scrolling mode="virtual" rowRenderingMode="virtual" />
+    <Paging enabled={true} pageSize={100} />
+    <FilterRow visible={true} />
+    <Column dataField="ref" visible={false} />
+    <Column dataField="name" caption="Назва" />
+    {/* <Column dataField="edrpou" caption="код ЄДРПОУ" /> */}
+  </DataGrid>
+</DropDownBox>
+</div>
+  )
+}
+
 const changeReq = (e)=>{
   setData((prevState) => ({
       ...prevState,
@@ -206,6 +347,7 @@ const changeReq = (e)=>{
     
     }));
 }
+
   return (
     <div>
       <Menu
@@ -290,7 +432,7 @@ const changeReq = (e)=>{
           }
           displayFormat={"dd-MM-yyyy HH:mm:ss"}
           useMaskBehavior={true}
-          onValueChanged={onValueChanged}
+          onValueChanged={onchangeDate}
           //                disabledDates={this.getDisabledDates}
         />
       </div>
@@ -439,8 +581,8 @@ const changeReq = (e)=>{
             }));
           }}
           onEditorPrepared={(e) => {
+            rowData = e.row.data;
             if (e.dataField === "quantity") {
-              rowData = e.row.data;
               e.editorElement.onchange = onQuantityChanged;
               console.log(e);
             }
@@ -473,18 +615,50 @@ const changeReq = (e)=>{
             calculateDisplayValue={(data) => {
               //                console.log(data) ;
               return data.nom?.name;
-            }}>
-            <Lookup
+            }}
+            setCellValue={onchangeNom}
+            editCellComponent={cellTemplate}
+            >
+            {/* <Lookup
               dataSource={nomsDataSource}
               valueExpr="ref"
               displayExpr="name"
               minSearchLength={3}
-              searchTimeout={500}></Lookup>
+              searchTimeout={500}
+              > */}
+            
+              {/* <DataGrid
+            remoteOperations={true}
+            dataSource={nomsDataSource}
+            //      columns={["ref", "name", "edrpou"]}
+            hoverStateEnabled={true}
+            //selectedRowKeys={this.state.gridBoxValue}
+            // onSelectionChanged={(e) => {
+            //   setData((prevState) => ({
+            //     ...prevState,
+            //     partner: {
+            //       ref: e.selectedRowsData[0].ref,
+            //       name: e.selectedRowsData[0].name,
+            //     },
+            //   }));
+            //   //console.log(e);
+            // }}
+            height="90%">
+            
+            <Selection mode="single" />
+            <Scrolling mode="virtual" rowRenderingMode="virtual" /> 
+            <Paging enabled={true} pageSize={100} />
+            <FilterRow visible={true} />
+            <Column dataField="ref" visible={false} />
+            <Column dataField="name" caption="Назва" />
+          </DataGrid> */}
+
+              {/* </Lookup> */}
           </Column>
-          <Column dataField="price" caption="Ціна" />
+          <Column dataField="price" caption="Ціна" allowEditing={false} />
           <Column dataField="quantity" caption="Кількість" />
-          <Column dataField="discount_percent" caption="%скидки" />
-          <Column dataField="amount" caption="Сума" />
+          <Column dataField="discount_percent" caption="%скидки" allowEditing={false}/>
+          <Column dataField="amount" caption="Сума" allowEditing={false}/>
         </DataGrid>
       </div>
       <div style={{ display: "flex", paddingRight: "1rem", width: "800" }}>

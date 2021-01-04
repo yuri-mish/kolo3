@@ -12,6 +12,7 @@ import DataGrid, {
   Column,
   Lookup,
   Button as CButton,
+  StateStoring,
 } from "devextreme-react/data-grid";
 // import { useState } from 'react';
 // import { Order } from './order';
@@ -315,6 +316,7 @@ const Orders = () => {
         allowSorting={true}
         remoteOperations={true}
         height={800}
+        
 
         //   onEditingStart={this.onEditingStart}
         //   onInitNewRow={this.onInitNewRow}
@@ -329,6 +331,7 @@ const Orders = () => {
         //   onEditCanceling={this.onEditCanceling}
         //   onEditCanceled={this.onEditCanceled}
       >
+            <StateStoring enabled={true} type="localStorage" storageKey="storage" />
             <Selection mode="single" />
             <Scrolling mode="virtual" rowRenderingMode="virtual"  />
             <Paging  pageSize={100} />
