@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
-import { TextBox, DateBox, Menu } from "devextreme-react";
+import { TextBox, DateBox, Menu, Popup } from "devextreme-react";
 import Toolbar, { Item } from "devextreme-react/toolbar";
 import { locale } from "devextreme/localization";
 import moment from "moment";
@@ -19,13 +19,16 @@ import DataGrid, {
   Lookup,
   Texts,
 } from "devextreme-react/data-grid";
+import { uuid } from 'uuidv4';
 
-import { partnerDataSource } from "./db/ds/dsPartners";
-import { nomsDataSource } from "./db/ds/dsNoms";
+import { partnerDataSource , PartnerBox} from "../../db/ds/dsPartners";
+import { nomsDataSource } from "../../db/ds/dsNoms";
 import { useParams } from "react-router-dom";
 import  notify  from 'devextreme/ui/notify';
 import { useHistory } from 'react-router-dom';
 import { ChartTitleSubtitle } from "devextreme-react/chart";
+import { convertToText } from "../../utils/filtfunc";
+import { Partner } from "../partner";
 
 var _ = require('lodash');
 
@@ -39,14 +42,18 @@ export const Order = (props) => {
   const OrderSchema = {
     date: moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss"),
     number_doc: "",
+    class_name:"doc.buyers_order",
     partner: { ref: "", name: "" },
     services: [{ nom: { ref: "", name: "" }, price: 0 }],
     doc_amount: 0,
+    vat_included:true,
+    doc_currency:'',
   };
 
   const [data, setData] = useState(OrderSchema);
 
   const [prices, setPrices] = useState();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const load = () => {
     return fetch("http://localhost:4000/", {
@@ -56,6 +63,7 @@ export const Order = (props) => {
         query: `{buyers_orders(ref:"${id}",limit:1) {
                     _id
                     doc_amount
+                    vat_included
                     number_doc
                     date
                     partner{ref name}
@@ -71,7 +79,7 @@ export const Order = (props) => {
                         name
                         name_full
                       }
-                      row price quantity amount discount_percent gos_code vin_code vat_rate vat_amount
+                      row content price quantity amount discount_percent gos_code vin_code vat_rate vat_amount
                     }
                   }
                 }`,
@@ -86,13 +94,13 @@ export const Order = (props) => {
         return response.json();
       })
       .then((data) => {
-        if (data.data.buyers_orders && data.data.buyers_orders.length > 0)
+        if (data.data.buyers_orders && data.data.buyers_orders.length > 0){
           setData(data.data.buyers_orders[0]);
-          if (data.data.buyers_orders && data.data.buyers_orders[0] )loadPrices(data.data.buyers_orders[0].date)
-        //totalCount: data.data.buyers_orders.length,
-        //summary: response.summary,
-        //groupCount: response.groupCount
-
+          loadPrices(data.data.buyers_orders[0].date)
+        }
+        else {
+          loadPrices()
+        }
         // return ()
       });
   };
@@ -105,7 +113,7 @@ export const Order = (props) => {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
-        query: `{prices ${datePatam} { nom price }}`,
+        query: `{prices ${datePatam} { nom price currency vat_included }}`,
       }),
       headers: {
         "Content-Type": "application/json",
@@ -113,13 +121,21 @@ export const Order = (props) => {
       //              mode:"no-cors" ,
     })
       .then((response) => {
-        console.log(response);
         return response.json();
       })
       .then((data) => {
+        console.log('=prices response:',data);
         var pr = []
-        if (data.data.prices && data.data.prices.length > 0)
+        if (data.data.prices && data.data.prices.length > 0){
           pr = data.data.prices
+          const vat_included = pr[0].vat_included === 'true'
+          const doc_currency = pr[0].currency
+          setData((prevState) => ({
+            ...prevState,
+            vat_included:vat_included,
+            doc_currency:doc_currency
+          }));
+        }
           setPrices(pr);
           return pr
       });
@@ -152,6 +168,7 @@ export const Order = (props) => {
     var doc_amount=0
     currentRowData.amount = currentRowData.price * currentRowData.quantity;
     if (isNaN(currentRowData.amount)) currentRowData.amount = 0
+    if (currentRowData.vat_rate==="НДС20") currentRowData.vat_amount = Math.round(currentRowData.amount/6, -2)
     data.services.forEach(r=>{doc_amount+= (r.row===currentRowData.row)?currentRowData.amount:r.amount})
     setData((prevState) => ({
       ...prevState,
@@ -160,13 +177,19 @@ export const Order = (props) => {
         if (row.row === currentRowData.row) return currentRowData;
         else return row;
       }),
+    
     }));
     
   }
-  const onchangeNom = (newData, value, currentRowData)=>{
+  const onchangeNom = async (newData, value, currentRowData)=>{
     console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData) 
     var pricerow = prices.find((r)=>{return r.nom === value})
     currentRowData.price = pricerow?pricerow.price:0
+    var res = await nomsDataSource.byKey(value)
+    if (res) {
+      currentRowData.content = res.name_full
+      if (res.vat_rate) currentRowData.vat_rate = res.vat_rate
+    }
     currentRowData.nom.ref = value
 
     calcrRow(currentRowData)
@@ -218,43 +241,7 @@ export const Order = (props) => {
     },
   };
 
-  function convertToText(obj) {
-    //create an array that will later be joined into a string.
-    var string = [];
 
-    //is object
-    //    Both arrays and objects seem to return "object"
-    //    when typeof(obj) is applied to them. So instead
-    //    I am checking to see if they have the property
-    //    join, which normal objects don't have but
-    //    arrays do.
-    if (obj === undefined || obj === null)  {
-      return String(obj);
-    } else if (typeof obj == "object" && obj.join === undefined) {
-      for (var prop in obj) {
-        if (obj.hasOwnProperty(prop))
-          string.push(prop + ": " + convertToText(obj[prop]));
-      }
-      return "{" + string.join(",") + "}";
-
-      //is array
-    } else if (typeof obj == "object" && !(obj.join === undefined)) {
-      for (prop in obj) {
-        string.push(convertToText(obj[prop]));
-      }
-      return "[" + string.join(",") + "]";
-
-      //is function
-    } else if (typeof obj == "function") {
-      string.push(obj.toString());
-
-      //all other values can be done with JSON.stringify
-    } else {
-      string.push(JSON.stringify(obj));
-    }
-
-    return string.join(",");
-  }
 
   const showError = (message)=>{
                     notify({message:message,position: { at: 'center'}}, "error", 5000);
@@ -262,9 +249,9 @@ export const Order = (props) => {
 
 const cellTemplate = (r)=>{
   return (
-    <div>
+    
   <DropDownBox
-  width="100%"
+  width="250px"
   value={r.data.value}
   valueExpr="ref"
   deferRendering={false}
@@ -273,25 +260,25 @@ const cellTemplate = (r)=>{
   placeholder="послуга ..."
   showClearButton={false}
   dataSource={nomsDataSource}
-  
-  // onValueChanged={(e) => {
+  dropDownOptions={{width:"888px"}}
+  //  onValueChanged={(e) => {
 
-  //   console.log(e);
-  // }}
+  //    console.log(e);
+  //  }}
   //             contentRender={dataGridRender}
 >
 
   <Menu
     onItemClick={(e) => {
-      console.log(e);
+      console.log('menu item:',e);
     }}
     dataSource={[
       {
         text: "Вибрати",
       },
-      {
-        text: "Додати",
-      },
+      // {
+      //   text: "Додати",
+      // },
       {
         text: "Закрити",
       },
@@ -309,12 +296,13 @@ const cellTemplate = (r)=>{
     ]}></Menu>
 
   <DataGrid
-   //remoteOperations={true}
+    remoteOperations={true}
     dataSource={nomsDataSource}
-    //      columns={["ref", "name", "edrpou"]}
+
     hoverStateEnabled={true}
+    
     //selectedRowKeys={this.state.gridBoxValue}
-    // onSelectionChanged={(e) => {
+     onSelectionChanged={(e) => {
     //   setData((prevState) => ({
     //     ...prevState,
     //     partner: {
@@ -322,21 +310,25 @@ const cellTemplate = (r)=>{
     //       name: e.selectedRowsData[0].name,
     //     },
     //   }));
-      //console.log(e);
-    //}}
-    width="1000px"
+    r.data.setValue(e.selectedRowsData[0].ref,e.selectedRowsData[0].name)
+    //r.data.row.content = e.selectedRowsData[0].name_full
+    console.log('===onSelectionChanged:',e);
+    }}
+    
     height="90%">
     
     <Selection mode="single" />
     <Scrolling mode="virtual" rowRenderingMode="virtual" />
-    <Paging enabled={true} pageSize={100} />
+    <Paging enabled={true} pageSize={200} />
     <FilterRow visible={true} />
     <Column dataField="ref" visible={false} />
-    <Column dataField="name" caption="Назва" />
-    {/* <Column dataField="edrpou" caption="код ЄДРПОУ" /> */}
+    <Column dataField="name" caption="Назва" width="150px"/>
+    <Column dataField="name_full" caption="Повна назва"/> 
+    
   </DataGrid>
+  
 </DropDownBox>
-</div>
+
   )
 }
 
@@ -354,9 +346,14 @@ const changeReq = (e)=>{
         onItemClick={async e => {
           if (e.itemData.id === "ok") {
             var doctosave = _.cloneDeep(data)
+            if (id==="new"){
+              doctosave._id='doc.buyers_order|'+uuid()
+              doctosave.class_name="doc.buyers_order"
+            }
             doctosave.partner=doctosave.partner.ref  
-            doctosave.organization=doctosave.organization.ref  
+            if (doctosave.organization) doctosave.organization=doctosave.organization.ref  
             if (doctosave.responsible) delete doctosave.responsible  
+
             
             doctosave.services.forEach(r=>{
               return r.nom = r.nom.ref
@@ -401,17 +398,17 @@ const changeReq = (e)=>{
           { 
             text: "Зберегти", disabled:true
           },
-          {
-            text: "Інше",
-            items: [
-              {
-                text: " інше 1",
-              },
-              {
-                text: "штше 2",
-              },
-            ],
-          },
+          // {
+          //   text: "Інше",
+          //   items: [
+          //     {
+          //       text: " інше 1",
+          //     },
+          //     {
+          //       text: "штше 2",
+          //     },
+          //   ],
+          // },
         ]}></Menu>
       <div style={{ display: "flex" }}>
         <div style={{ display: "flex", paddingRight: "1rem" }}>
@@ -439,59 +436,7 @@ const changeReq = (e)=>{
 
       <div style={{ display: "flex", paddingTop: "1rem" }}>
         <TextBox value="Контрагент"></TextBox>
-
-        <DropDownBox
-          width="100%"
-          value={data.partner?.ref}
-          valueExpr="ref"
-          deferRendering={false}
-          displayExpr="name"
-          //              displayExpr={this.gridBox_displayExpr}
-          placeholder="контрагент ..."
-          showClearButton={false}
-          dataSource={partnerDataSource}
-          
-          // onValueChanged={(e) => {
-
-          //   console.log(e);
-          // }}
-          //             contentRender={dataGridRender}
-        >
-        
-          <Menu
-            onItemClick={(e) => {
-              console.log(e);
-            }}
-            dataSource={[
-              {
-                text: "Вибрати",
-              },
-              {
-                text: "Додати",
-              },
-              {
-                text: "Закрити",
-              },
-              {
-                text: "Інше",
-                items: [
-                  {
-                    text: " інше 1",
-                  },
-                  {
-                    text: "штше 2",
-                  },
-                ],
-              },
-            ]}></Menu>
-
-          <DataGrid
-            remoteOperations={true}
-            dataSource={partnerDataSource}
-            //      columns={["ref", "name", "edrpou"]}
-            hoverStateEnabled={true}
-            //selectedRowKeys={this.state.gridBoxValue}
-            onSelectionChanged={(e) => {
+        <PartnerBox value={data.partner?.ref} onChange={(e) => {
               setData((prevState) => ({
                 ...prevState,
                 partner: {
@@ -499,34 +444,11 @@ const changeReq = (e)=>{
                   name: e.selectedRowsData[0].name,
                 },
               }));
-              //console.log(e);
-            }}
-            height="90%">
-            
-            <Selection mode="single" />
-            <Scrolling mode="virtual" rowRenderingMode="virtual" />
-            <Paging enabled={true} pageSize={100} />
-            <FilterRow visible={true} />
-            <Column dataField="ref" visible={false} />
-            <Column dataField="name" caption="Назва" />
-            <Column dataField="edrpou" caption="код ЄДРПОУ" />
-          </DataGrid>
-        </DropDownBox>
-      </div>
-
-      {/* <TextBox
-        value={format(
-          data.date ? Date.parse(data.date) : Date.now(),
-          "dd-MM-yyyyHH:mm:ss"
-        )}
-        placeholder="дата документа"
-        mask="00-00-0000 00:00:00"
-      /> */}
+            }}/>
+      </div> 
       <div style={{ display: "flex" }}>
-      {/* <div style={{ display: "flex", paddingRight: "1rem" }}> */}
-      <TextBox value="Особа"></TextBox>
+          <TextBox value="Особа"></TextBox>
           <TextBox  width= "80%" id="ClientPerson" value={data.ClientPerson} placeholder="контактана особа" onChange={changeReq}/>
-      {/* </div> */}
           <div style={{ display: "flex", paddingRight: "1rem" }}>
           <TextBox value="Телефон"></TextBox>
           <TextBox id="ClientPersonPhone" value={data.ClientPersonPhone} placeholder="контактаний телефон" onChange={changeReq}/>
@@ -549,8 +471,9 @@ const changeReq = (e)=>{
           remoteOperations={false}
           rowAlternationEnabled={true}
           showBorders={true}
-          dataSource={data.services.slice()}
-          //      columns={["ref", "name", "edrpou"]}
+//          dataSource={data.services.slice()}
+          dataSource={data.services.map((r)=>{return r})}
+         
           hoverStateEnabled={true}
           //activeStateEnabled = {true}
           //selectedRowKeys={this.state.gridBoxValue}
@@ -618,6 +541,7 @@ const changeReq = (e)=>{
             }}
             setCellValue={onchangeNom}
             editCellComponent={cellTemplate}
+            
             >
             {/* <Lookup
               dataSource={nomsDataSource}

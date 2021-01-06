@@ -14,10 +14,14 @@ import DataGrid, {
   Button as CButton,
   StateStoring,
 } from "devextreme-react/data-grid";
+import { Menu } from "devextreme-react";
+
 // import { useState } from 'react';
 // import { Order } from './order';
 // import { Popup } from 'devextreme-react';
 import { useHistory } from "react-router-dom";
+
+import {convertToText,filterObj} from '../../utils/filtfunc'
 
 
 const handleErrors = (response) => {
@@ -27,62 +31,8 @@ const handleErrors = (response) => {
   return response;
 };
 
-function filterObj (s){
-  console.log(s)
-  if (!Array.isArray(s[0])){
-    var fld = s[0].split('.')[0]
-    return {
-        fld:fld,
-        expr:s[1],
-        val:s[2]}
-  }
-  var result =[]
-  s.forEach(element => {
-    var exp = element 
-    if (Array.isArray(element)) exp = filterObj(element) 
-      else exp = {c:element}
-    result.push(exp)
-  });
-    return result
-}
 
-function convertToText(obj) {
-  //create an array that will later be joined into a string.
-  var string = [];
 
-  //is object
-  //    Both arrays and objects seem to return "object"
-  //    when typeof(obj) is applied to them. So instead
-  //    I am checking to see if they have the property
-  //    join, which normal objects don't have but
-  //    arrays do.
-  if (obj === undefined || obj === null)  {
-    return String(obj);
-  } else if (typeof obj == "object" && obj.join === undefined) {
-    for (var prop in obj) {
-      if (obj.hasOwnProperty(prop))
-        string.push(prop + ": " + convertToText(obj[prop]));
-    }
-    return "{" + string.join(",") + "}";
-
-    //is array
-  } else if (typeof obj == "object" && !(obj.join === undefined)) {
-    for (prop in obj) {
-      string.push(convertToText(obj[prop]));
-    }
-    return "[" + string.join(",") + "]";
-
-    //is function
-  } else if (typeof obj == "function") {
-    string.push(obj.toString());
-
-    //all other values can be done with JSON.stringify
-  } else {
-    string.push(JSON.stringify(obj));
-  }
-
-  return string.join(",");
-}
 
 
 const customDataSource = new CustomStore({
@@ -94,26 +44,26 @@ const customDataSource = new CustomStore({
   load: (options) => {
     console.log("=Options:" + JSON.stringify(options));
     ///////////////////////////////
-    let _filter = "";
-    if (options.filter && options.filter.length > 0) {
-      console.log('test:',typeof options.filter.join(",")) 
-      _filter = " filter:[";
-      let ofilt = options.filter;
-      var i = 0;
-      if (Array.isArray(options.filter[0])) {
-        ofilt.forEach((element) => {
-          if (Array.isArray(element) && element[2].length > 2)
-            _filter +=
-              (i > 0 ? `,` : ` `) +
-              `{field:"${element[0]}", expr:"${element[1]}", value:"${element[2]}"}`;
-          i++;
-        });
-      } else {
-        if (options.filter[2].length > 2)
-          _filter += ` {field:"${options.filter[0]}", expr:"${options.filter[1]}", value:"${options.filter[2]}"}`;
-      }
-      _filter += "] ";
-    }
+    // let _filter = "";
+    // if (options.filter && options.filter.length > 0) {
+    //   console.log('test:',typeof options.filter.join(",")) 
+    //   _filter = " filter:[";
+    //   let ofilt = options.filter;
+    //   var i = 0;
+    //   if (Array.isArray(options.filter[0])) {
+    //     ofilt.forEach((element) => {
+    //       if (Array.isArray(element) && element[2].length > 2)
+    //         _filter +=
+    //           (i > 0 ? `,` : ` `) +
+    //           `{field:"${element[0]}", expr:"${element[1]}", value:"${element[2]}"}`;
+    //       i++;
+    //     });
+    //   } else {
+    //     if (options.filter[2].length > 2)
+    //       _filter += ` {field:"${options.filter[0]}", expr:"${options.filter[1]}", value:"${options.filter[2]}"}`;
+    //   }
+    //   _filter += "] ";
+    // }
     ///////////////////////////////////////
     const _jsonFilter = options.filter?" jfilt:"+convertToText(filterObj(options.filter)):''
     console.log('_jsonFilter:',_jsonFilter)
@@ -142,7 +92,7 @@ const customDataSource = new CustomStore({
     if (options.requireTotalCount)
       _qT = `totalcount:buyers_orders (limit:1 ${_search} ${_jsonFilter} totalCount:1)  { totalcount} `;
 
-    var q = `{${_qT} buyers_orders(limit:${_limit} ${_search} ${_filter}${_sort}  ${_offset} ${_jsonFilter})
+    var q = `{${_qT} buyers_orders(limit:${_limit} ${_search} ${_sort}  ${_offset} ${_jsonFilter})
                     { 
                      _id
                      number_doc
@@ -308,6 +258,22 @@ const Orders = () => {
                 text="Click me"
                 onClick={sayHelloWorld}
             /> */}
+    <Menu
+    onItemClick={(e) => {
+      console.log('menu item:',e);
+      if (e.itemData.id==='new')  history.push("/order/new");
+ 
+    }}
+    dataSource={[
+      {
+        text: "Додати",
+        id:"new"
+      },
+      {
+        text: "Закрити",
+      },
+    ]}></Menu>
+
       <DataGrid
         id="gridContainer"
         dataSource={customDataSource}

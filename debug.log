@@ -20,3 +20,39 @@
 [0104/113947.066:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
 [0104/125120.677:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
 [0104/180659.591:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[0105/112733.155:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/114233.176:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/115733.190:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/121233.195:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/122733.204:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/124233.218:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/125733.221:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/131233.232:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/132733.244:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/133400.842:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/133400.843:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/133400.844:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/133400.844:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/134900.847:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/140400.849:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/141900.860:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/143400.865:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/144900.904:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/150400.910:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/151900.912:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/160233.598:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/160948.244:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/161948.249:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0105/161948.250:ERROR:filesystem_win.cc(116)] GetFileAttributes C:\Users\Prog1C\AppData\Local\Temp\.profile\Crashpad\reports\9a41b029-f3ec-433f-926e-4e88e2421dfa.dmp: Не удается найти указанный файл. (0x2)
+[0105/161948.251:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[0105/165010.654:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[0106/134323.675:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/135823.680:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/141323.682:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/142823.693:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/144323.695:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/154011.859:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/154212.976:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/155212.979:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0106/155212.980:ERROR:filesystem_win.cc(116)] GetFileAttributes C:\Users\Prog1C\AppData\Local\Temp\.profile\Crashpad\reports\71638853-9c89-4f6a-abec-5c069f15ccf9.dmp: Не удается найти указанный файл. (0x2)
+[0106/155212.982:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
