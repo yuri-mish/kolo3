@@ -44,9 +44,9 @@ export const Partner = (props)=>{
             colCount={2}
             width={1000}
           >
-            <Item dataField="edrpou" editorType="dxNumberBox" editorOptions={{ disabled: false }} />
+            <Item dataField="edrpou" editorType="dxNumberBox" editorOptions={{ disabled: false }} ><Label text="Код ЄДРПОУ"/></Item>
             <ButtonItem horizontalAlignment="left" buttonOptions = {{text: 'Знайти', type: 'success', useSubmitBehavior: true}}/> 
-            <SimpleItem  dataField="name"  caption="rrr" editorOptions={{ disabled: false }} /> 
+            <SimpleItem  dataField="name"  editorOptions={{ disabled: false }}><Label text="Найменування"/></SimpleItem> 
           </Form>
 
           

@@ -282,6 +282,7 @@ const Orders = () => {
         allowSorting={true}
         remoteOperations={true}
         height={800}
+        focusedRowEnabled = {true}
         
 
         //   onEditingStart={this.onEditingStart}

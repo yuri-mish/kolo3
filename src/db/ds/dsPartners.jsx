@@ -1,11 +1,11 @@
 import CustomStore from "devextreme/data/custom_store";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { DropDownBox } from "devextreme-react/drop-down-box";
 import { catLoad } from './../../utils/filtfunc';
-import { DataGrid, Menu, Popup } from "devextreme-react";
+import { DataGrid, DropDownBoxButton, Menu, Popup } from "devextreme-react";
 import { Partner } from './../../pages/partner';
-import { Column, FilterRow, Paging, Scrolling, Selection } from "devextreme-react/data-grid";
+import { Column, FilterRow, Paging, Scrolling, Selection, StateStoring } from "devextreme-react/data-grid";
 const cls_name = 'partners'
 const cls_fields = 'ref name edrpou'
 
@@ -64,8 +64,21 @@ export const partnerDataSource = new CustomStore({
 
 export const PartnerBox = (props)=>{
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const ddbox = useRef()  
+  const dgrid = useRef()
+  const viewButton = {
+  icon: 'search',
+  type: 'normal',//'default',
+  onClick: () => {
+    setDialogOpen(true)
+    ddbox.current.instance.open()
+  }
+};
+
   return (
-    <DropDownBox
+    <DropDownBox 
+    ref = {ddbox}
     width="100%"
     value={props.value}
     valueExpr="ref"
@@ -74,13 +87,20 @@ export const PartnerBox = (props)=>{
     placeholder="контрагент ..."
     showClearButton={false}
     dataSource={partnerDataSource}
+    buttons={[ 'dropDown',{name:"search", location:"after",options:viewButton}]}
+   
+
   >
-    <Menu
+   
+
+   <Menu
       onItemClick={(e) => {
         if (e.itemData.id === 'open')
           {console.log('=Відкрити=')
-          setDialogOpen(!dialogOpen)
+          setDialogOpen(true)
           }
+        if (e.itemData.id ==='close')
+        {ddbox.current.instance.close()}  
         console.log(e);
       }}
       dataSource={[
@@ -107,34 +127,43 @@ export const PartnerBox = (props)=>{
         //   ],
         // },
       ]}></Menu>
-    <Popup
+     
+     <Popup
         visible={dialogOpen}
-        onHiding={()=>{setDialogOpen(!dialogOpen)}}
+        
+       
+        onHiding={()=>{setDialogOpen(false)}}
         dragEnabled={false}
         closeOnOutsideClick={true}
         showTitle={true}
         title="-Контрагент-"
         width="80%"
         >
-
+       
         <Partner _id={props.value}/>
-
       </Popup>      
+     
 
     <DataGrid
+    ref = {dgrid}
       remoteOperations={true}
       dataSource={partnerDataSource}
       //      columns={["ref", "name", "edrpou"]}
       hoverStateEnabled={true}
-      //selectedRowKeys={this.state.gridBoxValue}
+      focusedRowEnabled = {true}
+      focusedRowKey = {props.value}
+      
+
       onSelectionChanged={(e) => {
-        if(props.onChange){
+        if(props.onChange && e.selectedRowsData.length){
           props.onChange(e)
         }
+        
       }}
       height="90%">
       
-      <Selection mode="single" />
+      {/* <StateStoring enabled={true} type="localStorage" storageKey="storageP" /> */}
+            <Selection mode="single" />
       <Scrolling mode="virtual" rowRenderingMode="virtual" />
       <Paging enabled={true} pageSize={100} />
       <FilterRow visible={true} />
