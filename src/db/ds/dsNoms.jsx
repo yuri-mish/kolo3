@@ -1,6 +1,7 @@
 import  CustomStore  from 'devextreme/data/custom_store';
 
 import { catLoad } from './../../utils/filtfunc';
+import { API_HOST } from './../../constants';
 const cls_name='noms'
 const cls_fields = 'ref name name_full vat_rate'
 
@@ -16,7 +17,7 @@ export const nomsDataSource = new CustomStore({
       //var res =  this.load({lookUp:keyf})
       const q = `{${cls_name} (ref:"${ref}" ) { ${cls_fields}} }`;
       
-      return fetch("http://localhost:4000/", {
+      return fetch(API_HOST, {
         method: "POST",
         body: JSON.stringify({ query: q }),
         headers: {

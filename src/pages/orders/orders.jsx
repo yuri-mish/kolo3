@@ -22,6 +22,7 @@ import { Menu } from "devextreme-react";
 import { useHistory } from "react-router-dom";
 
 import {convertToText,filterObj} from '../../utils/filtfunc'
+import { API_HOST } from './../../constants';
 
 
 const handleErrors = (response) => {
@@ -98,6 +99,9 @@ const customDataSource = new CustomStore({
                      number_doc
                      date
                      doc_amount
+                     paid
+                     shipped
+                     note
                      partner { 
                          _id ref name 
                         } 
@@ -105,16 +109,18 @@ const customDataSource = new CustomStore({
                     }
                  }`
   console.log ('=q=:',q)                 
-    return fetch("http://localhost:4000/", {
+   return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
+     // credentials: 'same-origin', mode:"no-cors",
       body: JSON.stringify({
         query: q,
       }),
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json"
       },
-      //              mode:"no-cors" ,
+ //                   mode:"no-cors" ,
     })
       .then(handleErrors)
       .then((response) => {
@@ -192,7 +198,7 @@ const lookupDataSource = new CustomStore({
                  }`;
 
     //       console.log(q)
-    return fetch("http://localhost:4000/", {
+    return fetch(API_HOST, {
       method: "POST",
       body: JSON.stringify({ query: q }),
       headers: {
@@ -310,11 +316,11 @@ const Orders = () => {
   //          startEditAction={this.state.startEditAction} 
 
             /> */}
-        <Column type="buttons" width={110}>
+        <Column type="buttons" width={40}>
           <CButton name="_edit" icon="edit" onClick={editIconClick} />
         </Column>
 
-        <Column
+        <Column width={140}
           dataField="number_doc"
           caption="Номер"
           dataType="string"
@@ -322,14 +328,14 @@ const Orders = () => {
           alignment="left"
           //          allowEditing={true}
         />
-        <Column
+        <Column width={120}
           dataField="date"
           caption="Дата"
           dataType="date"
           //format="currency"
           alignment="left"
         />
-        <Column
+        <Column width={400}
         allowSorting={false}
           dataField="partner.ref"
           caption="Контрагент"
@@ -340,7 +346,7 @@ const Orders = () => {
             //                console.log(data) ;
             return data.partner?.name;
           }}>
-          <Lookup
+          <Lookup 
             dataSource={lookupDataSource}
             valueExpr="ref"
             displayExpr="name"
@@ -348,15 +354,37 @@ const Orders = () => {
             searchTimeout={500}></Lookup>
         </Column>
 
-        <Column
-        allowSorting={false}
+        <Column width={100}
+          allowSorting={false}
           dataField="doc_amount"
           caption="Сума"
           dataType="number"
           //format="currency"
           alignment="right"
-
-          //          calculateCellValue={(data)=> {console.log(data) ; return data.partner?.name}}
+        />
+        <Column width={100}
+          allowSorting={false}
+          dataField="shipped"
+          caption="Відвантажено"
+          dataType="number"
+          //format="currency"
+          alignment="right"
+        />
+        <Column width={100}
+          allowSorting={false}
+          dataField="paid"
+          caption="Сплачено"
+          dataType="number"
+          //format="currency"
+          alignment="right"
+        />
+        <Column 
+          allowSorting={false}
+          dataField="note"
+          caption="Коментар"
+          dataType="number"
+          //format="currency"
+          alignment="left"
         />
       </DataGrid>
     </div>

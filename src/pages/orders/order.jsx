@@ -29,6 +29,7 @@ import { useHistory } from 'react-router-dom';
 import { ChartTitleSubtitle } from "devextreme-react/chart";
 import { convertToText } from "../../utils/filtfunc";
 import { Partner } from "../partner";
+import { API_HOST } from './../../constants';
 
 var _ = require('lodash');
 
@@ -56,7 +57,7 @@ export const Order = (props) => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const load = () => {
-    return fetch("http://localhost:4000/", {
+    return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
@@ -79,7 +80,7 @@ export const Order = (props) => {
                         name
                         name_full
                       }
-                      row content price quantity amount discount_percent gos_code vin_code vat_rate vat_amount
+                      row content price quantity amount discount_percent discount_percent_automatic gos_code vin_code vat_rate vat_amount
                     }
                   }
                 }`,
@@ -95,6 +96,15 @@ export const Order = (props) => {
       })
       .then((data) => {
         if (data.data.buyers_orders && data.data.buyers_orders.length > 0){
+          
+          data.data.buyers_orders[0].services.forEach((r)=>{
+              const calcPrice = Math.round(r.amount/r.quantity,-2)
+              r.nats = 0; r.spec = 0
+              if (calcPrice > r.price)
+                         r.nats = calcPrice - r.price
+              if (calcPrice < r.price && r.discount_percent_automatic === 0)
+                         r.spec = calcPrice           
+            })
           setData(data.data.buyers_orders[0]);
           loadPrices(data.data.buyers_orders[0].date)
         }
@@ -109,7 +119,7 @@ export const Order = (props) => {
      
     if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss")
     const datePatam= `(date:"${date}")`
-    return fetch("http://localhost:4000/", {
+    return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
@@ -166,9 +176,13 @@ export const Order = (props) => {
 
   const calcrRow = (currentRowData) =>{
     var doc_amount=0
-    currentRowData.amount = currentRowData.price * currentRowData.quantity;
+    if (!currentRowData.quantity) 
+          currentRowData.quantity=1
+    const pr = currentRowData.spec?currentRowData.spec:(currentRowData.price+(currentRowData.nats?currentRowData.nats:0))
+    currentRowData.amount = pr * currentRowData.quantity;
     if (isNaN(currentRowData.amount)) currentRowData.amount = 0
     if (currentRowData.vat_rate==="НДС20") currentRowData.vat_amount = Math.round(currentRowData.amount/6, -2)
+      else currentRowData.vat_amount=0
     data.services.forEach(r=>{doc_amount+= (r.row===currentRowData.row)?currentRowData.amount:r.amount})
     setData((prevState) => ({
       ...prevState,
@@ -182,7 +196,7 @@ export const Order = (props) => {
     
   }
   const onchangeNom = async (newData, value, currentRowData)=>{
-    console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData) 
+    //console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData) 
     var pricerow = prices.find((r)=>{return r.nom === value})
     currentRowData.price = pricerow?pricerow.price:0
     var res = await nomsDataSource.byKey(value)
@@ -191,6 +205,7 @@ export const Order = (props) => {
       if (res.vat_rate) currentRowData.vat_rate = res.vat_rate
     }
     currentRowData.nom.ref = value
+    currentRowData.amount = 0
 
     calcrRow(currentRowData)
     
@@ -339,6 +354,25 @@ const changeReq = (e)=>{
     
     }));
 }
+// const calcNats = (data)=>{
+//   if (data.quantity===0) return 0
+//     const calcPrice = Math.round(data.amount/data.quantity,-2)
+//     if (calcPrice > data.price)
+//     {
+//       return calcPrice - data.price
+//     }
+//     else return 0
+// }
+// const calcSpec = (data) => {
+//   if (data.quantity===0) return 0
+//     const calcPrice = Math.round(data.amount/data.quantity,-2)
+//     console.log(calcPrice)
+//     if (calcPrice < data.price && data.discount_percent_automatic === 0)
+//     {
+//       return calcPrice
+//     }
+//     else return 0
+// }
 
   return (
     <div>
@@ -354,8 +388,12 @@ const changeReq = (e)=>{
             if (doctosave.organization) doctosave.organization=doctosave.organization.ref  
             if (doctosave.responsible) delete doctosave.responsible  
 
+            //doctosave.savetime = moment.now()
+
             
             doctosave.services.forEach(r=>{
+              if (r.spec) delete r.spec
+              if (r.nats) delete r.spec
               return r.nom = r.nom.ref
               })
             const q = JSON.stringify({
@@ -364,7 +402,7 @@ const changeReq = (e)=>{
                       }}`,
             });
 
-            const response = await fetch("http://localhost:4000/", {
+            const response = await fetch(API_HOST, {
               method: "POST",
               credentials: "include",
               body: q,
@@ -440,8 +478,9 @@ const changeReq = (e)=>{
               setData((prevState) => ({
                 ...prevState,
                 partner: {
-                  ref: e.selectedRowsData[0].ref,
-                  name: e.selectedRowsData[0].name,
+                  ref: e.ref,
+                  name: e.name
+//                  name: e.selectedRowsData[0].name,
                 },
               }));
             }}/>
@@ -471,6 +510,8 @@ const changeReq = (e)=>{
           remoteOperations={false}
           rowAlternationEnabled={true}
           showBorders={true}
+          allowColumnResizing={true}
+          columnResizingMode='widget'
 //          dataSource={data.services.slice()}
           dataSource={data.services.map((r)=>{return r})}
          
@@ -579,10 +620,19 @@ const changeReq = (e)=>{
 
               {/* </Lookup> */}
           </Column>
-          <Column dataField="price" caption="Ціна" allowEditing={false} />
-          <Column dataField="quantity" caption="Кількість" />
-          <Column dataField="discount_percent" caption="%скидки" allowEditing={false}/>
-          <Column dataField="amount" caption="Сума" allowEditing={false}/>
+          <Column dataField="price" caption="Ціна" allowEditing={false} width={100}
+            headerCellRender={ (data) =>{ return  <p 
+                    //style={{ 'font-size': '16px' }
+                    >Ціна<br/>(прайс) </p>;
+            }}
+          />
+          <Column dataField="quantity" caption="Кількість"  width={80}/>
+          <Column dataField="spec" caption="СпецЦіна" allowEditing={false} width={100}/>
+          <Column dataField="discount_percent_automatic" caption="%скидки" allowEditing={false} width={80} />
+           <Column dataField="nats" caption="Націнка" value={100} allowEditing={false} width={80}  /> {/* calculateCellValue={calcNats} */}
+          <Column dataField="amount" caption="Сума" allowEditing={false} width={100}/>
+          <Column dataField="gos_code" caption="Держ.номер" allowEditing={true}/>
+          <Column dataField="vin_code" caption="VIN код" allowEditing={true}/>
         </DataGrid>
       </div>
       <div style={{ display: "flex", paddingRight: "1rem", width: "800" }}>

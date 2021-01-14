@@ -1,33 +1,35 @@
 import defaultUser from '../utils/default-user';
+import { API_HOST } from './../constants';
 
 const getAuth = async (user,pass) => {
-  const auth =  await fetch("http://localhost:4000/", {
+  const auth =  await  fetch(API_HOST, {
     method: "POST",
-    credentials:'include',
-    //credentials: 'same-origin',
-    body: JSON.stringify({
-      query: `{auth (name:"${user}",pass:"${pass}") }`,
+    credentials:'include', 
+    //mode:'cors',
+      body: JSON.stringify({
+      query: `{auth (name:"${user}",pass:"${pass}") }`, 
     }),
     headers: {
       "Content-Type": "application/json",
     },
     })
     .then((response) => {
+      console.log(response)
       return response.json();
     })
     .then((data) => {
 //      data.data.auth.branch = data.data.branch
 
        return data.data.auth
-    });
+    }).catch((e)=>console.log('Ooops',e));
 
     return auth
 };
 
 export const logout = async (user,pass) => {
-  return await fetch("http://localhost:4000/", {
+  return await fetch(API_HOST, {
     method: "POST",
-    credentials:'include',
+    credentials:'include', 
     //credentials: 'same-origin',
     body: JSON.stringify({
       query: `{logout

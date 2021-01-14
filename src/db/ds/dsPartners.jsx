@@ -1,13 +1,16 @@
 import CustomStore from "devextreme/data/custom_store";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DropDownBox } from "devextreme-react/drop-down-box";
 import { catLoad } from './../../utils/filtfunc';
 import { DataGrid, DropDownBoxButton, Menu, Popup } from "devextreme-react";
 import { Partner } from './../../pages/partner';
 import { Column, FilterRow, Paging, Scrolling, Selection, StateStoring } from "devextreme-react/data-grid";
+import { uuid } from 'uuidv4';
+
+import { API_HOST } from './../../constants';
 const cls_name = 'partners'
-const cls_fields = 'ref name edrpou'
+const cls_fields = 'ref name edrpou id parent is_buyer is_supplier legal_address note name_full individual_legal inn'
 
 export const partnerDataSource = new CustomStore({
   key: "ref",
@@ -18,7 +21,7 @@ export const partnerDataSource = new CustomStore({
     const q = `{${cls_name} (ref:"${ref}" ) {${cls_fields} } }`;
 
     return (
-      fetch("http://localhost:4000/", {
+      fetch(API_HOST, {
         method: "POST",
         body: JSON.stringify({ query: q }),
         headers: {
@@ -64,17 +67,36 @@ export const partnerDataSource = new CustomStore({
 
 export const PartnerBox = (props)=>{
   const [dialogOpen, setDialogOpen] = useState(false);
-  
+  const [id, setId] = useState();
+  console.log('id:',id,'value',props.value)
   const ddbox = useRef()  
   const dgrid = useRef()
+
+ 
+  useEffect(() => {
+    setId(prev => props.value)
+    return () => {};
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.value]);
+
   const viewButton = {
   icon: 'search',
   type: 'normal',//'default',
   onClick: () => {
+    setId(id)
     setDialogOpen(true)
     ddbox.current.instance.open()
   }
 };
+
+  const selectHandler = (rowData)=>{
+
+    console.log('dounleclick', rowData)
+    if (props.onChange){
+        props.onChange(rowData)
+    }
+        ddbox.current.instance.close()
+  }
 
   return (
     <DropDownBox 
@@ -88,8 +110,6 @@ export const PartnerBox = (props)=>{
     showClearButton={false}
     dataSource={partnerDataSource}
     buttons={[ 'dropDown',{name:"search", location:"after",options:viewButton}]}
-   
-
   >
    
 
@@ -99,6 +119,10 @@ export const PartnerBox = (props)=>{
           {console.log('=Відкрити=')
           setDialogOpen(true)
           }
+        if(e.itemData.id === 'new')  {
+          setId(uuid())
+          setDialogOpen(true)
+        }
         if (e.itemData.id ==='close')
         {ddbox.current.instance.close()}  
         console.log(e);
@@ -110,6 +134,7 @@ export const PartnerBox = (props)=>{
         },
         {
           text: "Додати",
+          id:"new"
         },
         {
           text: "Закрити",
@@ -130,14 +155,13 @@ export const PartnerBox = (props)=>{
      
      <Popup
         visible={dialogOpen}
-        
        
         onHiding={()=>{setDialogOpen(false)}}
-        dragEnabled={false}
+        dragEnabled={true}
         closeOnOutsideClick={true}
         showTitle={true}
         title="-Контрагент-"
-        width="80%"
+        width="75%"
         >
        
         <Partner _id={props.value}/>
@@ -151,13 +175,15 @@ export const PartnerBox = (props)=>{
       //      columns={["ref", "name", "edrpou"]}
       hoverStateEnabled={true}
       focusedRowEnabled = {true}
-      focusedRowKey = {props.value}
+      focusedRowKey = {id}
       
-
+      onRowDblClick={(e)=>{
+        selectHandler(e.data)
+      }}
       onSelectionChanged={(e) => {
-        if(props.onChange && e.selectedRowsData.length){
-          props.onChange(e)
-        }
+        if(e.selectedRowsData.length){
+          setId(e.selectedRowsData[0])
+     }
         
       }}
       height="90%">
