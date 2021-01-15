@@ -118,7 +118,8 @@ export const Partner = (props)=>{
     
      
     useEffect(() => {
-      setP(props._id.ref);
+      if (props._id)
+        setP(props._id.ref);
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props._id]);

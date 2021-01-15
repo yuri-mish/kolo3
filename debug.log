@@ -98,3 +98,4 @@
 [0113/180018.181:ERROR:crash_report_database_win.cc(496)] failed to stat report
 [0113/180018.183:ERROR:filesystem_win.cc(116)] GetFileAttributes C:\Users\Prog1C\AppData\Local\Temp\.profile\Crashpad\reports\3c7b2051-22e9-45af-882f-bb3bec4027a1.dmp: Не удается найти указанный файл. (0x2)
 [0113/180018.184:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[0115/094948.897:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)

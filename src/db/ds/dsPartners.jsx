@@ -68,7 +68,8 @@ export const partnerDataSource = new CustomStore({
 export const PartnerBox = (props)=>{
   const [dialogOpen, setDialogOpen] = useState(false);
   const [id, setId] = useState();
-  console.log('id:',id,'value',props.value)
+  const currentRowData = useRef();
+  console.log('currentRowData',currentRowData.current,'\nid:',id,'value',props.value)
   const ddbox = useRef()  
   const dgrid = useRef()
 
@@ -115,9 +116,14 @@ export const PartnerBox = (props)=>{
 
    <Menu
       onItemClick={(e) => {
-        if (e.itemData.id === 'open')
-          {console.log('=Відкрити=')
+        if (e.itemData.id === 'open') {
           setDialogOpen(true)
+          }
+        if (e.itemData.id === 'select'){
+          var rowData = dgrid.current.props.focusedRowKey
+          console.log('dgrid',dgrid)
+          selectHandler(rowData)
+          //setDialogOpen(true)
           }
         if(e.itemData.id === 'new')  {
           setId(uuid())
@@ -128,6 +134,11 @@ export const PartnerBox = (props)=>{
         console.log(e);
       }}
       dataSource={[
+        {
+          text: "Вибрати",
+          id:"select",
+          visible: props.onChange !== undefined
+        },
         {
           text: "Відкрити",
           id:"open"
@@ -164,7 +175,7 @@ export const PartnerBox = (props)=>{
         width="75%"
         >
        
-        <Partner _id={props.value}/>
+        <Partner _id={currentRowData.current}/>
       </Popup>      
      
 
@@ -172,6 +183,10 @@ export const PartnerBox = (props)=>{
     ref = {dgrid}
       remoteOperations={true}
       dataSource={partnerDataSource}
+      onFocusedRowChanged={(e)=>{
+        currentRowData.current = e.row.data
+        console.log(e)
+      }}
       //      columns={["ref", "name", "edrpou"]}
       hoverStateEnabled={true}
       focusedRowEnabled = {true}
@@ -182,6 +197,7 @@ export const PartnerBox = (props)=>{
       }}
       onSelectionChanged={(e) => {
         if(e.selectedRowsData.length){
+          //currentRowData.current = e.selectedRowsData[0]
           setId(e.selectedRowsData[0])
      }
         
