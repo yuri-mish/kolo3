@@ -44,28 +44,7 @@ const customDataSource = new CustomStore({
   },
   load: (options) => {
     console.log("=Options:" + JSON.stringify(options));
-    ///////////////////////////////
-    // let _filter = "";
-    // if (options.filter && options.filter.length > 0) {
-    //   console.log('test:',typeof options.filter.join(",")) 
-    //   _filter = " filter:[";
-    //   let ofilt = options.filter;
-    //   var i = 0;
-    //   if (Array.isArray(options.filter[0])) {
-    //     ofilt.forEach((element) => {
-    //       if (Array.isArray(element) && element[2].length > 2)
-    //         _filter +=
-    //           (i > 0 ? `,` : ` `) +
-    //           `{field:"${element[0]}", expr:"${element[1]}", value:"${element[2]}"}`;
-    //       i++;
-    //     });
-    //   } else {
-    //     if (options.filter[2].length > 2)
-    //       _filter += ` {field:"${options.filter[0]}", expr:"${options.filter[1]}", value:"${options.filter[2]}"}`;
-    //   }
-    //   _filter += "] ";
-    // }
-    ///////////////////////////////////////
+    
     const _jsonFilter = options.filter?" jfilt:"+convertToText(filterObj(options.filter)):''
     console.log('_jsonFilter:',_jsonFilter)
 

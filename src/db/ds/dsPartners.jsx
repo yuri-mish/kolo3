@@ -1,12 +1,12 @@
 import CustomStore from "devextreme/data/custom_store";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { DropDownBox } from "devextreme-react/drop-down-box";
 import { catLoad } from './../../utils/filtfunc';
 import { DataGrid, DropDownBoxButton, Menu, Popup } from "devextreme-react";
 import { Partner } from './../../pages/partner';
 import { Column, FilterRow, Paging, Scrolling, Selection, StateStoring } from "devextreme-react/data-grid";
-import { uuid } from 'uuidv4';
+import { v4 as uuid_v4 } from "uuid";
 
 import { API_HOST } from './../../constants';
 const cls_name = 'partners'
@@ -67,15 +67,23 @@ export const partnerDataSource = new CustomStore({
 
 export const PartnerBox = (props)=>{
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [id, setId] = useState();
+//  const [id, setId] = useState();
   const currentRowData = useRef();
-  console.log('currentRowData',currentRowData.current,'\nid:',id,'value',props.value)
+//  console.log('currentRowData',currentRowData.current,'\nid:',id,'value',props.value)
   const ddbox = useRef()  
   const dgrid = useRef()
 
- 
-  useEffect(() => {
-    setId(prev => props.value)
+ const currentRowData_byKeyAsync = async (key)=>{
+   var newObj = await partnerDataSource.byKey(key)
+   if (!newObj) newObj = {ref:key}
+    currentRowData.current = newObj
+ }
+  useEffect( () => {
+    
+    if (!currentRowData.current) currentRowData.current = {ref:props.value}
+    currentRowData_byKeyAsync(props.value)
+    
+  //  setId(prev => props.value)
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.value]);
@@ -83,21 +91,39 @@ export const PartnerBox = (props)=>{
   const viewButton = {
   icon: 'search',
   type: 'normal',//'default',
-  onClick: () => {
-    setId(id)
+  onClick: async () => {
+   // setId(id)
+    if (!currentRowData.current) {currentRowData.current = await partnerDataSource.byKey(props.value)}
+   
     setDialogOpen(true)
     ddbox.current.instance.open()
   }
 };
 
   const selectHandler = (rowData)=>{
-
-    console.log('dounleclick', rowData)
-    if (props.onChange){
-        props.onChange(rowData)
-    }
-        ddbox.current.instance.close()
+    if (props.onChange) props.onChange(rowData)
+    ddbox.current.instance.close()
   }
+
+  const clickMenu = useCallback(
+    (e) => {
+        if (e.itemData.id === 'open') {
+          setDialogOpen(true)
+          }
+        if (e.itemData.id === 'select'){
+          selectHandler(currentRowData.current)
+          }
+        if(e.itemData.id === 'new')  {
+         
+          currentRowData.current = {ref:uuid_v4()}
+          setDialogOpen(true)
+        }
+        if (e.itemData.id ==='close')
+        {ddbox.current.instance.close()}  
+        console.log(e);
+      },
+    [],
+  )
 
   return (
     <DropDownBox 
@@ -115,24 +141,7 @@ export const PartnerBox = (props)=>{
    
 
    <Menu
-      onItemClick={(e) => {
-        if (e.itemData.id === 'open') {
-          setDialogOpen(true)
-          }
-        if (e.itemData.id === 'select'){
-          var rowData = dgrid.current.props.focusedRowKey
-          console.log('dgrid',dgrid)
-          selectHandler(rowData)
-          //setDialogOpen(true)
-          }
-        if(e.itemData.id === 'new')  {
-          setId(uuid())
-          setDialogOpen(true)
-        }
-        if (e.itemData.id ==='close')
-        {ddbox.current.instance.close()}  
-        console.log(e);
-      }}
+      onItemClick={clickMenu}
       dataSource={[
         {
           text: "Вибрати",
@@ -174,8 +183,7 @@ export const PartnerBox = (props)=>{
         title="-Контрагент-"
         width="75%"
         >
-       
-        <Partner _id={currentRowData.current}/>
+        <Partner _id={currentRowData.current?currentRowData.current:props.value}/>
       </Popup>      
      
 
@@ -185,20 +193,19 @@ export const PartnerBox = (props)=>{
       dataSource={partnerDataSource}
       onFocusedRowChanged={(e)=>{
         currentRowData.current = e.row.data
-        console.log(e)
+     //   console.log(e)
       }}
-      //      columns={["ref", "name", "edrpou"]}
       hoverStateEnabled={true}
       focusedRowEnabled = {true}
-      focusedRowKey = {id}
+      focusedRowKey = {props.value}
       
       onRowDblClick={(e)=>{
         selectHandler(e.data)
       }}
       onSelectionChanged={(e) => {
         if(e.selectedRowsData.length){
-          //currentRowData.current = e.selectedRowsData[0]
-          setId(e.selectedRowsData[0])
+          currentRowData.current = e.selectedRowsData[0]
+ //         setId(e.selectedRowsData[0].ref)
      }
         
       }}

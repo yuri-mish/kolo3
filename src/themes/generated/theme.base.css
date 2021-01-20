@@ -3251,14 +3251,11 @@
 }
 .dx-checkbox-checked .dx-checkbox-icon {
   color: #fff;
-  background-color: #3db91d;
+  background-color: #ff5722;
   border: none;
   font: 16px/16px DXIcons;
   text-align: center;
 }
-
-
-
 .dx-checkbox-checked .dx-checkbox-icon::before {
   content: "";
   position: absolute;

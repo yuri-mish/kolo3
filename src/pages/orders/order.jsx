@@ -19,7 +19,7 @@ import DataGrid, {
   Lookup,
   Texts,
 } from "devextreme-react/data-grid";
-import { uuid } from 'uuidv4';
+import { v4 as uuid_v4 } from "uuid";
 
 import { partnerDataSource , PartnerBox} from "../../db/ds/dsPartners";
 import { nomsDataSource } from "../../db/ds/dsNoms";
@@ -297,6 +297,7 @@ const cellTemplate = (r)=>{
       {
         text: "Закрити",
       },
+      
       {
         text: "Інше",
         items: [
@@ -376,12 +377,13 @@ const changeReq = (e)=>{
 
   return (
     <div>
-      <Menu
+      <Menu 
         onItemClick={async e => {
-          if (e.itemData.id === "ok") {
+          switch(e.itemData.id){
+           case "ok": {
             var doctosave = _.cloneDeep(data)
             if (id==="new"){
-              doctosave._id='doc.buyers_order|'+uuid()
+              doctosave._id='doc.buyers_order|'+uuid_v4()
               doctosave.class_name="doc.buyers_order"
             }
             doctosave.partner=doctosave.partner.ref  
@@ -395,7 +397,7 @@ const changeReq = (e)=>{
               if (r.spec) delete r.spec
               if (r.nats) delete r.spec
               return r.nom = r.nom.ref
-              })
+          })
             const q = JSON.stringify({
               query: `mutation{setBuyersOrder(input:${convertToText(doctosave)}) {
                     _id
@@ -419,23 +421,64 @@ const changeReq = (e)=>{
               });
             }
             else { history.goBack(); }
+            break
           }
-          if (e.itemData.id === "close") {
+          case "close": {
               history.goBack();
+              break
           }
+          case "print": {
+            var windowObjectReference = null;
+            var winParam = '';// `width=${window.screen.width*8/10},left=${window.screen.width/10}`
+            windowObjectReference = window.open(e.itemData.url, "printwin",winParam)
+            windowObjectReference.focus()
+            break
+          }
+          default:{}
           
-        }}
+        }}}
         dataSource={[
           {
             id: "ok",
             text: "Закрити і зберегти",
+            icon:"save"
           },
           { id:"close",
             text: "Закрити",
+            icon:"close"
           },
           { 
             text: "Зберегти", disabled:true
           },
+          { text:"Друк",
+            icon:"print",
+              items:[
+                {
+                id:"print",
+                text:"Рахунок",
+                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=inv`,
+                disabled:!data.number_doc,
+              },
+              {
+                id:"print",
+                text:"Договір",
+                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dog`,
+                disabled:!data.number_doc,
+              },
+              {
+                id:"print",
+                text:"Договір сертифікації",
+                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogs`,
+                disabled:!data.number_doc,
+              },
+              {
+                id:"print",
+                text:"Договір для Казначейства",
+                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogk`,
+                disabled:!data.number_doc,
+              },
+        ]
+      },  
           // {
           //   text: "Інше",
           //   items: [
@@ -451,7 +494,7 @@ const changeReq = (e)=>{
       <div style={{ display: "flex" }}>
         <div style={{ display: "flex", paddingRight: "1rem" }}>
           <TextBox disabled={true} value="Номер"></TextBox>
-          <TextBox readOnly={true} value={data.number_doc} placeholder="номер документа" />
+          <TextBox readOnly={true} value={data.number_doc} placeholder="...номер документа..." hint="номер документу присвоєний головним офісом"/>
         </div>
         <TextBox value="Дата"></TextBox>
         <DateBox
@@ -468,6 +511,7 @@ const changeReq = (e)=>{
           displayFormat={"dd-MM-yyyy HH:mm:ss"}
           useMaskBehavior={true}
           onValueChanged={onchangeDate}
+          hint="дата документу"
           //                disabledDates={this.getDisabledDates}
         />
       </div>
@@ -487,10 +531,10 @@ const changeReq = (e)=>{
       </div> 
       <div style={{ display: "flex" }}>
           <TextBox value="Особа"></TextBox>
-          <TextBox  width= "80%" id="ClientPerson" value={data.ClientPerson} placeholder="контактана особа" onChange={changeReq}/>
+          <TextBox  width= "80%" id="ClientPerson" value={data.ClientPerson} placeholder="...контактана особа..." onChange={changeReq}/>
           <div style={{ display: "flex", paddingRight: "1rem" }}>
           <TextBox value="Телефон"></TextBox>
-          <TextBox id="ClientPersonPhone" value={data.ClientPersonPhone} placeholder="контактаний телефон" onChange={changeReq}/>
+          <TextBox id="ClientPersonPhone" value={data.ClientPersonPhone} placeholder="... номер телефон" onChange={changeReq}/>
         </div>
         </div> 
 

@@ -11,6 +11,7 @@ import Form, {
 import LoadIndicator from 'devextreme-react/load-indicator';
 import notify from 'devextreme/ui/notify';
 import { useAuth } from '../../contexts/auth';
+import { useSubscription, gql } from "@apollo/client";
 
 import './login-form.scss';
 

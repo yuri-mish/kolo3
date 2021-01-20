@@ -1,26 +1,26 @@
 export const navigation = [
   {
-    text: 'Home',
+    text: 'Головна',
     path: '/home',
     icon: 'home'
   },
   {
     text: 'Замовлення',
     path: '/orders',
-    icon: 'document'
+    icon: 'car'
   },
   {
-    text: 'Examples',
+    text: 'Довідка',
     icon: 'folder',
     items: [
-      {
-        text: 'Profile',
-        path: '/profile'
-      },
-      {
-        text: 'Tasks',
-        path: '/tasks'
-      }
+      // {
+      //   text: 'Profile',
+      //   path: '/profile'
+      // },
+      // {
+      //   text: 'Tasks',
+      //   path: '/tasks'
+      // }
     ]
   }
   ];

@@ -64,10 +64,10 @@ const handleErrors = (response) => {
   return response;
 };
 export const catLoad = (options,cls_name,cls_fields) => {
-    console.log("=Options:" + JSON.stringify(options));
+    // console.log("=Options:" + JSON.stringify(options));
 
     const _jsonFilter = options.filter?" jfilt:"+convertToText(filterObj(options.filter)):''
-      console.log('_jsonFilter:',_jsonFilter)
+    //  console.log('_jsonFilter:',_jsonFilter)
 
     var _offset = "";
     if (options.skip) _offset = ` offset:${options.skip}`;
