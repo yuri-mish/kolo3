@@ -263,6 +263,7 @@ const Orders = () => {
         id="gridContainer"
         dataSource={customDataSource}
         allowColumnReordering={true}
+        allowColumnResizing={true}
         showBorders={true}
         allowSorting={true}
         remoteOperations={true}
