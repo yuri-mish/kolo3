@@ -103,3 +103,29 @@
 [0121/155539.895:ERROR:filesystem_win.cc(116)] GetFileAttributes C:\Users\Prog1C\AppData\Local\Temp\.profile\Crashpad\reports\9cf5ca84-6b8b-443f-b25c-980e4caf52aa.dmp: Не удается найти указанный файл. (0x2)
 [0121/155539.895:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
 [0121/162817.142:ERROR:directory_reader_win.cc(43)] FindFirstFile: Системе не удается найти указанный путь. (0x3)
+[0122/100439.768:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/100439.770:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/101939.771:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/101939.771:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/103439.773:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/103439.773:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/104939.775:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/104939.775:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/110439.777:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/110439.778:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/111939.778:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/111939.778:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/113439.779:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/113439.779:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/114939.782:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/114939.784:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/120439.785:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/120439.785:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/121939.791:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/121939.791:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/123439.793:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/123439.793:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/124939.793:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/124939.795:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/130439.798:ERROR:crash_report_database_win.cc(496)] failed to stat report
+[0122/130439.800:ERROR:crash_report_database_win.cc(496)] failed to stat report

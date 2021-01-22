@@ -470,7 +470,7 @@ const changeReq = (e)=>{
                 id:"print",
                 text:"Договір сертифікації",
                 url:API_HOST+`/printform/${id}/dogs`,
-                disabled:true,//!data.number_doc,
+                disabled:false,//!data.number_doc,
               },
               {
                 id:"print",
