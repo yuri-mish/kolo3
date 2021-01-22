@@ -15,6 +15,7 @@ const cls_fields = 'ref name edrpou id parent is_buyer is_supplier legal_address
 export const partnerDataSource = new CustomStore({
   key: "ref",
 
+
   byKey: (ref) => {
     if (!ref) return { ref: ref, name: "" };
     console.log("=2:", ref);
@@ -23,9 +24,11 @@ export const partnerDataSource = new CustomStore({
     return (
       fetch(API_HOST, {
         method: "POST",
+        credentials: "include",
         body: JSON.stringify({ query: q }),
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json"
         },
       })
         //        .then(handleErrors)
@@ -64,6 +67,14 @@ export const partnerDataSource = new CustomStore({
     });
   },
 });
+
+partnerDataSource.byEdrpou = async (edrpou)=>{
+    const options={filter:["edrpou","=",edrpou]}
+    const res = await catLoad(options,cls_name,cls_fields);
+    if (res.data &&res.data.length>0)
+      return res.data[0]
+    else return undefined  
+}
 
 export const PartnerBox = (props)=>{
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -192,11 +203,12 @@ export const PartnerBox = (props)=>{
       remoteOperations={true}
       dataSource={partnerDataSource}
       onFocusedRowChanged={(e)=>{
-        currentRowData.current = e.row.data
+                if (e.row) currentRowData.current = e.row.data
+                else currentRowData.current = {name:'',ref:''}
      //   console.log(e)
       }}
       hoverStateEnabled={true}
-      focusedRowEnabled = {true}
+ //     focusedRowEnabled = {true}
       focusedRowKey = {props.value}
       
       onRowDblClick={(e)=>{

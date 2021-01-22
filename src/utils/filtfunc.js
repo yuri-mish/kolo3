@@ -66,7 +66,12 @@ const handleErrors = (response) => {
 export const catLoad = (options,cls_name,cls_fields) => {
     // console.log("=Options:" + JSON.stringify(options));
 
-    const _jsonFilter = options.filter?" jfilt:"+convertToText(filterObj(options.filter)):''
+    var filt = options.filter
+
+    if (options.searchExpr && options.searchValue!==null ) {
+        filt = [options.searchExpr,options.searchOperation,options.searchValue]
+    }
+    const _jsonFilter = filt?" jfilt:"+convertToText(filterObj(filt)):''
     //  console.log('_jsonFilter:',_jsonFilter)
 
     var _offset = "";
@@ -86,6 +91,7 @@ export const catLoad = (options,cls_name,cls_fields) => {
     return (
       fetch(API_HOST, {
         method: "POST",
+        credentials: "include",
         body: JSON.stringify({ query: q }),
         headers: {
           "Content-Type": "application/json",

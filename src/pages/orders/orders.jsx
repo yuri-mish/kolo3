@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/auth";
 import "devextreme/dist/css/dx.common.css";
 import "devextreme/dist/css/dx.light.css";
@@ -16,13 +16,14 @@ import DataGrid, {
 } from "devextreme-react/data-grid";
 import { Menu } from "devextreme-react";
 
-// import { useState } from 'react';
+// import { useState, useRef } from 'react';
 // import { Order } from './order';
 // import { Popup } from 'devextreme-react';
 import { useHistory } from "react-router-dom";
 
 import {convertToText,filterObj} from '../../utils/filtfunc'
 import { API_HOST } from './../../constants';
+import { PartnerBox, partnerDataSource } from "../../db/ds/dsPartners";
 
 
 const handleErrors = (response) => {
@@ -203,6 +204,14 @@ const Orders = () => {
   const { user, signOut } = useAuth();
   //    const [errorLoading, setDialogOpen] = useState(false);
   const history = useHistory();
+  const [currRow,setCurrRow] = useState({ref:''})
+
+useEffect(() => {
+  //etCurrRow()
+  return () => {
+    
+  };
+}, [])
 
   customDataSource.on("loaded", function (result) {
     if (result.errors) {
@@ -211,6 +220,18 @@ const Orders = () => {
     }
   });
 
+  const setRow=(e)=>{
+    var r
+    if (e.row) r=e.row.data
+
+    if (e.data) r=e.data
+    
+    if (r){
+      r.ref = r._id.split('|')[1]
+      setCurrRow(r)
+    }  
+
+    }
   // const classes = useStyles();
 
   const editIconClick = (e) => {
@@ -246,8 +267,19 @@ const Orders = () => {
     <Menu
     onItemClick={(e) => {
       console.log('menu item:',e);
-      if (e.itemData.id==='new')  history.push("/order/new");
- 
+      switch(e.itemData.id){
+      case "new": { history.push("/order/new");
+                    break
+                  }
+      case "print": {
+            var windowObjectReference = null;
+            var winParam = '';// `width=${window.screen.width*8/10},left=${window.screen.width/10}`
+            windowObjectReference = window.open(e.itemData.url, "printwin",winParam)
+            windowObjectReference.focus()
+            break
+          }
+          default:{}
+        }
     }}
     dataSource={[
       {
@@ -257,6 +289,35 @@ const Orders = () => {
       {
         text: "Закрити",
       },
+      { text:"Друк",
+            icon:"print",
+              items:[
+                {
+                id:"print",
+                text:"Рахунок",
+                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${currRow.ref}&rep=inv`,
+     //           disabled:!data.number_doc,
+              },
+              {
+                id:"print",
+                text:"Договір",
+       //         url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dog`,
+       //         disabled:!data.number_doc,
+              },
+              {
+                id:"print",
+                text:"Договір сертифікації",
+       //         url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogs`,
+                disabled:true,//!data.number_doc,
+              },
+              {
+                id:"print",
+                text:"Договір для Казначейства",
+         //       url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogk`,
+         //       disabled:!data.number_doc,
+              },
+        ]
+      },  
     ]}></Menu>
 
       <DataGrid
@@ -268,9 +329,10 @@ const Orders = () => {
         allowSorting={true}
         remoteOperations={true}
         height={800}
-        focusedRowEnabled = {true}
-        
+  //      focusedRowEnabled = {true}
 
+        onRowClick = {setRow}
+       // onFocusedRowChanged={setRow}
         //   onEditingStart={this.onEditingStart}
         //   onInitNewRow={this.onInitNewRow}
         //   onRowInserting={this.onRowInserting}
@@ -284,11 +346,11 @@ const Orders = () => {
         //   onEditCanceling={this.onEditCanceling}
         //   onEditCanceled={this.onEditCanceled}
       >
-            <StateStoring enabled={true} type="localStorage" storageKey="storage" />
+            <StateStoring enabled={true} type="localStorage" storageKey="orders" />
             <Selection mode="single" />
             <Scrolling mode="virtual" rowRenderingMode="virtual"  />
             <Paging  pageSize={100} />
-            <FilterRow visible={true} />
+            <FilterRow visible={true}  />
         {/* <Editing
             mode="batch" 
             allowUpdating={true}
@@ -302,6 +364,7 @@ const Orders = () => {
 
         <Column width={140}
           dataField="number_doc"
+       
           caption="Номер"
           dataType="string"
           //format="currency"
@@ -322,16 +385,27 @@ const Orders = () => {
           dataType="string"
           //format="currency"
           alignment="left"
+          
+          onEditorPreparing  = {(e)=>{
+          console.log(e)
+        }}
+
           calculateDisplayValue={(data) => {
             //                console.log(data) ;
             return data.partner?.name;
           }}>
+  
           <Lookup 
-            dataSource={lookupDataSource}
+//            dataSource={lookupDataSource}
+            dataSource={partnerDataSource} allowClearing={true} 
+
             valueExpr="ref"
             displayExpr="name"
             minSearchLength={3}
-            searchTimeout={500}></Lookup>
+      
+            searchTimeout={500}>
+         
+            </Lookup>
         </Column>
 
         <Column width={100}

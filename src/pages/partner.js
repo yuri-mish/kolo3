@@ -35,7 +35,32 @@ export const Partner = (props) => {
   const history = useHistory();
   let { id } = useParams();
 
-  const handleOpenDataBot = (e) => {
+  const handleOpenDataBot = async (e) => {
+
+    const dat = await asyncRule({value:partner.edrpou});
+
+    if (!dat) {
+      notify({ message: "Неправильний код ЄДРПОУ", position: "center center" },
+        "error",
+        3000
+      )
+      return
+    }
+    const d = await partnerDataSource.byEdrpou(''+partner.edrpou)
+    if (d) {
+        setPartner(d);
+        notify({ message: "Знайдено у базі", position: "center center" },
+        "success",
+        3000
+      )
+        return 0
+    }
+
+    notify({ message: "Пошук в OpenDataBot", position: "center center" },
+    "warning",
+    3000
+  )
+
     setloadPanelVisible(true);
     const findVal = (obj, key) => {
       var seen = new Set(),
@@ -96,13 +121,14 @@ export const Partner = (props) => {
             inn: inn ? inn[0].number : "",
             note: !prevState.note ? JSON.stringify(botPartner) : prevState.note,
           }));
+          return
         } else {
           notify(
             { message: "Не знайдено!!!", position: "center center" },
             "error",
             2000
           );
-          setPartner({});
+          setPartner({edrpou:partner.edrpou});
         }
       });
   };
@@ -146,13 +172,15 @@ export const Partner = (props) => {
   const showError = (message) => {
     notify({ message: message, position: { at: "center" } }, "error", 5000);
   };
+
   const asyncRule = (value) => {
     return new Promise((resolve) => {
       resolve(
-        ("" + value.value).length === 8 || ("" + value.value).length === 10
+        value.value.length === 8 || value.value.length === 10
       );
     });
   };
+
   return (
     <div>
       <LoadPanel
@@ -167,14 +195,15 @@ export const Partner = (props) => {
       />
       <Menu
         onItemClick={async (e) => {
-          switch (e) {
+          switch (e.itemData.id) {
             case "save": {
               var doctosave = _.cloneDeep(partner);
               var ref = doctosave.ref;
-              if (!doctosave.id || doctosave.id === "") {
+              if (!doctosave._id) {
                 doctosave._id = "cat.partners|" + ref;
                 doctosave.class_name = "cat.partners";
               }
+              
               if (doctosave.ref) delete doctosave.ref;
 
               const q = JSON.stringify({
@@ -255,8 +284,10 @@ export const Partner = (props) => {
           <GroupItem colSpan={2}>
             <SimpleItem
               dataField="edrpou"
+              editorType="dxTextBox"
               activeStateEnabled={true}
               editorOptions={{ disabled: false }}>
+              
               <Label text="Код ЄДРПОУ" />
               <AsyncRule
                 message="Неправильний код"

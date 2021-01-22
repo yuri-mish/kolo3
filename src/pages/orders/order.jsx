@@ -469,7 +469,7 @@ const changeReq = (e)=>{
                 id:"print",
                 text:"Договір сертифікації",
                 url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogs`,
-                disabled:!data.number_doc,
+                disabled:true,//!data.number_doc,
               },
               {
                 id:"print",
