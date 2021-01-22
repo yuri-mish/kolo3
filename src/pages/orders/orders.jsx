@@ -295,25 +295,25 @@ useEffect(() => {
                 {
                 id:"print",
                 text:"Рахунок",
-                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${currRow.ref}&rep=inv`,
+                url:API_HOST+`/printform/${currRow.ref}/inv`,
      //           disabled:!data.number_doc,
               },
               {
                 id:"print",
                 text:"Договір",
-       //         url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dog`,
+                url:API_HOST+`/printform/${currRow.ref}/dog`,
        //         disabled:!data.number_doc,
               },
               {
                 id:"print",
                 text:"Договір сертифікації",
-       //         url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogs`,
-                disabled:true,//!data.number_doc,
+                url:API_HOST+`/printform/${currRow.ref}/dogs`,
+                disabled:false,//!data.number_doc,
               },
               {
                 id:"print",
                 text:"Договір для Казначейства",
-         //       url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogk`,
+                url:API_HOST+`/printform/${currRow.ref}/dogk`,
          //       disabled:!data.number_doc,
               },
         ]

@@ -389,6 +389,7 @@ const changeReq = (e)=>{
             doctosave.partner=doctosave.partner.ref  
             if (doctosave.organization) doctosave.organization=doctosave.organization.ref  
             if (doctosave.responsible) delete doctosave.responsible  
+            if (doctosave.number_doc) delete doctosave.number_doc
 
             //doctosave.savetime = moment.now()
 
@@ -456,25 +457,25 @@ const changeReq = (e)=>{
                 {
                 id:"print",
                 text:"Рахунок",
-                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=inv`,
+                url:API_HOST+`/printform/${id}/inv`,
                 disabled:!data.number_doc,
               },
               {
                 id:"print",
                 text:"Договір",
-                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dog`,
+                url:API_HOST+`/printform/${id}/dog`,
                 disabled:!data.number_doc,
               },
               {
                 id:"print",
                 text:"Договір сертифікації",
-                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogs`,
+                url:API_HOST+`/printform/${id}/dogs`,
                 disabled:true,//!data.number_doc,
               },
               {
                 id:"print",
                 text:"Договір для Казначейства",
-                url:`https://1cweb.otk.in.ua/otk-base/hs/OTK?doc=buyers_order&ref=${id}&rep=dogk`,
+                url:API_HOST+`/printform/${id}/dogk`,
                 disabled:!data.number_doc,
               },
         ]

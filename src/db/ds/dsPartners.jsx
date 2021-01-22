@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { DropDownBox } from "devextreme-react/drop-down-box";
 import { catLoad } from './../../utils/filtfunc';
-import { DataGrid, DropDownBoxButton, Menu, Popup } from "devextreme-react";
+import { DataGrid,  Menu, Popup } from "devextreme-react";
 import { Partner } from './../../pages/partner';
 import { Column, FilterRow, Paging, Scrolling, Selection, StateStoring } from "devextreme-react/data-grid";
 import { v4 as uuid_v4 } from "uuid";
