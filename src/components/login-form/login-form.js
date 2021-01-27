@@ -11,15 +11,33 @@ import Form, {
 import LoadIndicator from 'devextreme-react/load-indicator';
 import notify from 'devextreme/ui/notify';
 import { useAuth } from '../../contexts/auth';
-import { useSubscription, gql } from "@apollo/client";
+
 
 import './login-form.scss';
+
+
+
+
+
+
+
+
 
 export const LoginForm = ()=> {
   //const history = useHistory();
   const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const formData = useRef({});
+  
+  //function DontReadTheComments({ repoFullName }) {
+    //  const { data: data, loading } = useSubscription(
+
+   
+      
+      //return <h4>New comment: {!loading }</h4>;
+    //}
+    //  DontReadTheComments(ob)
+
 
   const onSubmit = useCallback(async (e) => {
     e.preventDefault();

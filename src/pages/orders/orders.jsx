@@ -25,6 +25,10 @@ import {convertToText,filterObj} from '../../utils/filtfunc'
 import { API_HOST } from './../../constants';
 import { PartnerBox, partnerDataSource } from "../../db/ds/dsPartners";
 
+import { useSubscription, gql} from "@apollo/client";
+import Cookies  from 'universal-cookie';
+//import { useCookies } from 'react-cookie';
+
 
 const handleErrors = (response) => {
   if (!response.ok) {
@@ -44,10 +48,10 @@ const customDataSource = new CustomStore({
     console.log(dat);
   },
   load: (options) => {
-    console.log("=Options:" + JSON.stringify(options));
+ //   console.log("=Options:" + JSON.stringify(options));
     
     const _jsonFilter = options.filter?" jfilt:"+convertToText(filterObj(options.filter)):''
-    console.log('_jsonFilter:',_jsonFilter)
+//    console.log('_jsonFilter:',_jsonFilter)
 
 
     
@@ -88,7 +92,7 @@ const customDataSource = new CustomStore({
 
                     }
                  }`
-  console.log ('=q=:',q)                 
+//  console.log ('=q=:',q)                 
    return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
@@ -200,11 +204,28 @@ const lookupDataSource = new CustomStore({
   },
 });
 
+
+
+
 const Orders = () => {
+  const refGrid = useRef()
   const { user, signOut } = useAuth();
-  //    const [errorLoading, setDialogOpen] = useState(false);
+    //    const [errorLoading, setDialogOpen] = useState(false);
   const history = useHistory();
   const [currRow,setCurrRow] = useState({ref:''})
+
+  const sq = gql(`subscription{docChange(input:{username:"${user?user.email:''}"})}`)
+  const  {data: docChange,loading: loading_docChange} = useSubscription(sq);
+    //console.log('=data=:',docChange,' =loading=:',loading_docChange)
+  
+    useEffect(() => {
+    console.log('=data=:',docChange,' =loading=:',loading_docChange)
+      refGrid.current.instance.refresh(true)
+       return () => {
+      // cleanup
+     }
+   }, [docChange,loading_docChange]) 
+
 
 useEffect(() => {
   //etCurrRow()
@@ -322,6 +343,9 @@ useEffect(() => {
 
       <DataGrid
         id="gridContainer"
+        highlightChanges={true}
+        
+        ref = {refGrid}
         dataSource={customDataSource}
         allowColumnReordering={true}
         allowColumnResizing={true}
@@ -375,7 +399,7 @@ useEffect(() => {
           dataField="date"
           caption="Дата"
           dataType="date"
-          //format="currency"
+          format="dd/MM/yyyy HH:mm:ss"
           alignment="left"
         />
         <Column width={400}

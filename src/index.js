@@ -5,9 +5,26 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+import { WebSocketLink } from 'apollo-link-ws';
+import { ApolloClient, ApolloProvider } from "@apollo/client";
+import {InMemoryCache} from 'apollo-cache-inmemory';
+
+//const link = 
+const Aclient = new ApolloClient({
+  cache: new InMemoryCache(),
+  link:  new WebSocketLink({
+    uri: `wss://otkapi.vioo.com.ua/ws`,
+    options: {
+      reconnect: true
+    }
+  })
+}) ;
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <ApolloProvider client={Aclient}>
+       <App />
+    </ApolloProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
