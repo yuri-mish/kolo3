@@ -6,7 +6,7 @@ const cls_name='noms'
 const cls_fields = 'ref name name_full vat_rate'
 
 export const nomsDataSource = new CustomStore({
-
+    
     key: "ref", 
     //loadMode:"raw",
     
@@ -35,6 +35,7 @@ export const nomsDataSource = new CustomStore({
 
 
      load: (options) => {
+      options.userOptions = nomsDataSource.userOptions
       return catLoad(options,cls_name,cls_fields);
     },
     insert: (val) => {
@@ -57,6 +58,8 @@ export const nomsDataSource = new CustomStore({
     },
      
   });
+
+  nomsDataSource.userOptions = {}
 
 
 

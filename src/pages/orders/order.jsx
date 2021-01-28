@@ -16,19 +16,16 @@ import DataGrid, {
   Scrolling,
   Column,
   Editing,
-  Lookup,
   Texts,
 } from "devextreme-react/data-grid";
 import { v4 as uuid_v4 } from "uuid";
 
-import { partnerDataSource , PartnerBox} from "../../db/ds/dsPartners";
+import { PartnerBox} from "../../db/ds/dsPartners";
 import { nomsDataSource } from "../../db/ds/dsNoms";
 import { useParams } from "react-router-dom";
 import  notify  from 'devextreme/ui/notify';
 import { useHistory } from 'react-router-dom';
-import { ChartTitleSubtitle } from "devextreme-react/chart";
 import { convertToText } from "../../utils/filtfunc";
-import { Partner } from "../partner";
 import { API_HOST } from './../../constants';
 
 var _ = require('lodash');
@@ -54,7 +51,6 @@ export const Order = (props) => {
   const [data, setData] = useState(OrderSchema);
 
   const [prices, setPrices] = useState();
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   const load = () => {
     return fetch(API_HOST, {
@@ -88,7 +84,6 @@ export const Order = (props) => {
       headers: {
         "Content-Type": "application/json",
       },
-      //              mode:"no-cors" ,
     })
       .then((response) => {
         console.log(response);
@@ -96,7 +91,6 @@ export const Order = (props) => {
       })
       .then((data) => {
         if (data.data.buyers_orders && data.data.buyers_orders.length > 0){
-          
           data.data.buyers_orders[0].services.forEach((r)=>{
               const calcPrice = Math.round(r.amount/r.quantity,-2)
               r.nats = 0; r.spec = 0
@@ -111,7 +105,6 @@ export const Order = (props) => {
         else {
           loadPrices()
         }
-        // return ()
       });
   };
 
@@ -128,7 +121,6 @@ export const Order = (props) => {
       headers: {
         "Content-Type": "application/json",
       },
-      //              mode:"no-cors" ,
     })
       .then((response) => {
         return response.json();
@@ -155,23 +147,16 @@ export const Order = (props) => {
   useEffect(() => {
     load();
     loadPrices();
+    nomsDataSource.userOptions.selectServices = true;
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const onValueChanged = (param) => {
-    setData((prevState) => ({
-      ...prevState,
-      date: moment(param.value).format("YYYY-MM-DDTHH:mm:ss"),
-    }));
-  };
 
   locale("uk"); //!!!!+++
   console.log("=" + data.date);
 
   const onQuantityChanged = (r) => {
     calcrRow(rowData)
-
   };
 
   const calcrRow = (currentRowData) =>{
@@ -188,8 +173,7 @@ export const Order = (props) => {
       ...prevState,
       doc_amount:doc_amount,
       services: prevState.services.map((row) => {
-        if (row.row === currentRowData.row) return currentRowData;
-        else return row;
+          return (row.row === currentRowData.row)?currentRowData:row
       }),
     
     }));
@@ -266,21 +250,16 @@ const cellTemplate = (r)=>{
   return (
     
   <DropDownBox
-  width="250px"
+  //width="200px"
   value={r.data.value}
   valueExpr="ref"
   deferRendering={false}
   displayExpr="name"
-  //              displayExpr={this.gridBox_displayExpr}
   placeholder="послуга ..."
   showClearButton={false}
   dataSource={nomsDataSource}
-  dropDownOptions={{width:"888px"}}
-  //  onValueChanged={(e) => {
+  dropDownOptions={{width:"800px"}}
 
-  //    console.log(e);
-  //  }}
-  //             contentRender={dataGridRender}
 >
 
   <Menu
@@ -314,21 +293,10 @@ const cellTemplate = (r)=>{
   <DataGrid
     remoteOperations={true}
     dataSource={nomsDataSource}
-
     hoverStateEnabled={true}
-    
-    //selectedRowKeys={this.state.gridBoxValue}
      onSelectionChanged={(e) => {
-    //   setData((prevState) => ({
-    //     ...prevState,
-    //     partner: {
-    //       ref: e.selectedRowsData[0].ref,
-    //       name: e.selectedRowsData[0].name,
-    //     },
-    //   }));
-    r.data.setValue(e.selectedRowsData[0].ref,e.selectedRowsData[0].name)
-    //r.data.row.content = e.selectedRowsData[0].name_full
-    console.log('===onSelectionChanged:',e);
+      r.data.setValue(e.selectedRowsData[0].ref,e.selectedRowsData[0].name)
+  //  console.log('===onSelectionChanged:',e);
     }}
     
     height="90%">
@@ -355,25 +323,6 @@ const changeReq = (e)=>{
     
     }));
 }
-// const calcNats = (data)=>{
-//   if (data.quantity===0) return 0
-//     const calcPrice = Math.round(data.amount/data.quantity,-2)
-//     if (calcPrice > data.price)
-//     {
-//       return calcPrice - data.price
-//     }
-//     else return 0
-// }
-// const calcSpec = (data) => {
-//   if (data.quantity===0) return 0
-//     const calcPrice = Math.round(data.amount/data.quantity,-2)
-//     console.log(calcPrice)
-//     if (calcPrice < data.price && data.discount_percent_automatic === 0)
-//     {
-//       return calcPrice
-//     }
-//     else return 0
-// }
 
   return (
     <div>
@@ -391,9 +340,6 @@ const changeReq = (e)=>{
             if (doctosave.responsible) delete doctosave.responsible  
             if (doctosave.number_doc) delete doctosave.number_doc
 
-            //doctosave.savetime = moment.now()
-
-            
             doctosave.services.forEach(r=>{
               if (r.spec) delete r.spec
               if (r.nats) delete r.spec
@@ -622,48 +568,12 @@ const changeReq = (e)=>{
             dataField="nom.ref"
             caption="Номенклатура"
             calculateDisplayValue={(data) => {
-              //                console.log(data) ;
               return data.nom?.name;
             }}
             setCellValue={onchangeNom}
             editCellComponent={cellTemplate}
             
             >
-            {/* <Lookup
-              dataSource={nomsDataSource}
-              valueExpr="ref"
-              displayExpr="name"
-              minSearchLength={3}
-              searchTimeout={500}
-              > */}
-            
-              {/* <DataGrid
-            remoteOperations={true}
-            dataSource={nomsDataSource}
-            //      columns={["ref", "name", "edrpou"]}
-            hoverStateEnabled={true}
-            //selectedRowKeys={this.state.gridBoxValue}
-            // onSelectionChanged={(e) => {
-            //   setData((prevState) => ({
-            //     ...prevState,
-            //     partner: {
-            //       ref: e.selectedRowsData[0].ref,
-            //       name: e.selectedRowsData[0].name,
-            //     },
-            //   }));
-            //   //console.log(e);
-            // }}
-            height="90%">
-            
-            <Selection mode="single" />
-            <Scrolling mode="virtual" rowRenderingMode="virtual" /> 
-            <Paging enabled={true} pageSize={100} />
-            <FilterRow visible={true} />
-            <Column dataField="ref" visible={false} />
-            <Column dataField="name" caption="Назва" />
-          </DataGrid> */}
-
-              {/* </Lookup> */}
           </Column>
           <Column dataField="price" caption="Ціна" allowEditing={false} width={100}
             headerCellRender={ (data) =>{ return  <p 

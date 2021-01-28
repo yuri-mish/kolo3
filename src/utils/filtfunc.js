@@ -80,11 +80,15 @@ export const catLoad = (options,cls_name,cls_fields) => {
     var _limit = 100;
     if (options.take) _limit = options.take;
 
+    var _userOptions=''
+    if (options.userOptions)
+      _userOptions = ' options:'+ convertToText(options.userOptions)
+
     var _qT = ``;
     if (options.requireTotalCount)
-      _qT = `totalcount:${cls_name} (limit:1 ${_jsonFilter} totalCount:1)  { totalcount} `;
+      _qT = `totalcount:${cls_name} (limit:1 ${_jsonFilter}${_userOptions} totalCount:1)  { totalcount} `;
 
-    const q = `{ ${_qT} ${cls_name} (limit:${_limit} ${_jsonFilter} ${_offset}) {${cls_fields}}}`; 
+    const q = `{ ${_qT} ${cls_name} (limit:${_limit} ${_jsonFilter}${_offset}${_userOptions}) {${cls_fields}}}`; 
 
     console.log(q);
 
