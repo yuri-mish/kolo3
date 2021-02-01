@@ -598,7 +598,7 @@ const formValidation =()=>{
           </Editing>
 
           <Column
-            dataField="nom.ref"
+            dataField="nom.ref"    
             caption="Номенклатура"
             calculateDisplayValue={(data) => {
               return data.nom?.name;
