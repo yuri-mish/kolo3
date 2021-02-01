@@ -594,7 +594,7 @@ const formValidation =()=>{
             //allowAdding={true}
             allowDeleting={true}
             useIcons={true} confirmDelete = {false}>
-            <Texts confirmDeleteMessage="Вилучити?" deleteRow="вилучити" />
+            <Texts    confirmDeleteMessage="Вилучити?" deleteRow="вилучити" />
           </Editing>
 
           <Column
