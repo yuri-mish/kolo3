@@ -26,7 +26,7 @@ import { useParams } from "react-router-dom";
 import  notify  from 'devextreme/ui/notify';
 import { useHistory } from 'react-router-dom';
 import { convertToText } from "../../utils/filtfunc";
-import { API_HOST } from './../../constants';
+import { API_HOST, uaFilterRowText } from './../../constants';
 
 var _ = require('lodash');
 
@@ -42,7 +42,7 @@ export const Order = (props) => {
     number_doc: "",
     class_name:"doc.buyers_order",
     partner: { ref: "", name: "" },
-    services: [{ nom: { ref: "", name: "" }, price: 0 }],
+    services: [{ nom: { row:1, ref: "", name: "<вибрати послугу>" }, price: 0 }],
     doc_amount: 0,
     vat_included:true,
     doc_currency:'',
@@ -89,9 +89,11 @@ export const Order = (props) => {
         console.log(response);
         return response.json();
       })
-      .then((data) => {
+      .then(async (data) => {
         if (data.data.buyers_orders && data.data.buyers_orders.length > 0){
+          const locpr = await loadPrices(data.data.buyers_orders[0].date)
           data.data.buyers_orders[0].services.forEach((r)=>{
+              r.price  = locpr.find((p)=>{return p.nom === r.nom.ref})?.price||0
               const calcPrice = Math.round(r.amount/r.quantity,-2)
               r.nats = 0; r.spec = 0
               if (calcPrice > r.price)
@@ -100,7 +102,6 @@ export const Order = (props) => {
                          r.spec = calcPrice           
             })
           setData(data.data.buyers_orders[0]);
-          loadPrices(data.data.buyers_orders[0].date)
         }
         else {
           loadPrices()
@@ -255,7 +256,7 @@ const cellTemplate = (r)=>{
   valueExpr="ref"
   deferRendering={false}
   displayExpr="name"
-  placeholder="послуга ..."
+  placeholder='...вкажіть послугу ...'
   showClearButton={false}
   dataSource={nomsDataSource}
   dropDownOptions={{width:"800px"}}
@@ -295,6 +296,7 @@ const cellTemplate = (r)=>{
     dataSource={nomsDataSource}
     hoverStateEnabled={true}
      onSelectionChanged={(e) => {
+      if (!r.data.data.nom)  r.data.data.nom={ref:'',nom:''}
       r.data.setValue(e.selectedRowsData[0].ref,e.selectedRowsData[0].name)
   //  console.log('===onSelectionChanged:',e);
     }}
@@ -304,7 +306,7 @@ const cellTemplate = (r)=>{
     <Selection mode="single" />
     <Scrolling mode="virtual" rowRenderingMode="virtual" />
     <Paging enabled={true} pageSize={200} />
-    <FilterRow visible={true} />
+    <FilterRow visible={true} {...uaFilterRowText}/>
     <Column dataField="ref" visible={false} />
     <Column dataField="name" caption="Назва" width="150px"/>
     <Column dataField="name_full" caption="Повна назва"/> 
@@ -324,13 +326,44 @@ const changeReq = (e)=>{
     }));
 }
 
+const formValidation =()=>{
+  let isValid = true
+  let errorMessage=''
+  if (!data.partner||!data.partner.ref){
+      isValid = false
+      errorMessage += 'Помилка: Не заповнено реквізит Контрагент\r\n'
+    }
+  if (data.services.length===0){
+      isValid = false
+      errorMessage += 'Помилка: Таблична частина порожня\r\n'
+    }
+
+  data.services.forEach((r)=>{
+     if (!r.nom||!r.nom.ref) 
+     {
+      isValid = false
+      errorMessage += `Помилка: (рядок №${r.row}) - не заповнена послуга\r\n`
+    }
+    if (r.quantity<1) 
+     {
+      isValid = false
+      errorMessage += `Помилка: (рядок №${r.row}) - невірна кількість\r\n`
+    }
+
+  })  
+  if (!isValid) showError(errorMessage)
+  return isValid
+}
+
   return (
     <div>
-      <Menu 
+     <Menu 
         onItemClick={async e => {
+  
           switch(e.itemData.id){
            case "ok": {
-            var doctosave = _.cloneDeep(data)
+            if (!formValidation()) return
+              const doctosave = _.cloneDeep(data)
             if (id==="new"){
               doctosave._id='doc.buyers_order|'+uuid_v4()
               doctosave.class_name="doc.buyers_order"
@@ -560,8 +593,8 @@ const changeReq = (e)=>{
             allowUpdating={true}
             //allowAdding={true}
             allowDeleting={true}
-            useIcons={true}>
-            <Texts confirmDeleteMessage="Вилучити?" />
+            useIcons={true} confirmDelete = {false}>
+            <Texts confirmDeleteMessage="Вилучити?" deleteRow="вилучити" />
           </Editing>
 
           <Column
@@ -572,7 +605,7 @@ const changeReq = (e)=>{
             }}
             setCellValue={onchangeNom}
             editCellComponent={cellTemplate}
-            
+            placeholder="...вкажіть послугу.."
             >
           </Column>
           <Column dataField="price" caption="Ціна" allowEditing={false} width={100}
@@ -581,10 +614,10 @@ const changeReq = (e)=>{
                     >Ціна<br/>(прайс) </p>;
             }}
           />
-          <Column dataField="quantity" caption="Кількість"  width={80}/>
+          <Column dataField="quantity" caption="Кількість" width={80} allowEditing={true}/>
           <Column dataField="spec" caption="СпецЦіна" allowEditing={false} width={100}/>
           <Column dataField="discount_percent_automatic" caption="%скидки" allowEditing={false} width={80} />
-           <Column dataField="nats" caption="Націнка" value={100} allowEditing={false} width={80}  /> {/* calculateCellValue={calcNats} */}
+          <Column dataField="nats" caption="Націнка" value={100} allowEditing={false} width={80}  /> {/* calculateCellValue={calcNats} */}
           <Column dataField="amount" caption="Сума" allowEditing={false} width={100}/>
           <Column dataField="gos_code" caption="Держ.номер" allowEditing={true}/>
           <Column dataField="vin_code" caption="VIN код" allowEditing={true}/>

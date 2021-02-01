@@ -22,12 +22,13 @@ import { Menu } from "devextreme-react";
 import { useHistory } from "react-router-dom";
 
 import {convertToText,filterObj} from '../../utils/filtfunc'
-import { API_HOST } from './../../constants';
+import { API_HOST, resetOperationText, txtOperationDescriptions, uaFilterRow, uaFilterRowText } from './../../constants';
 import { PartnerBox, partnerDataSource } from "../../db/ds/dsPartners";
 
 import { useSubscription, gql} from "@apollo/client";
 import Cookies  from 'universal-cookie';
 //import { useCookies } from 'react-cookie';
+import { locale } from 'devextreme/localization';
 
 
 const handleErrors = (response) => {
@@ -229,6 +230,7 @@ const Orders = () => {
 
 useEffect(() => {
   //etCurrRow()
+  
   return () => {
     
   };
@@ -374,7 +376,7 @@ useEffect(() => {
             <Selection mode="single" />
             <Scrolling mode="virtual" rowRenderingMode="virtual"  />
             <Paging  pageSize={100} />
-            <FilterRow visible={true}  />
+            <FilterRow visible={true} {...uaFilterRowText}/>
         {/* <Editing
             mode="batch" 
             allowUpdating={true}
@@ -382,11 +384,11 @@ useEffect(() => {
   //          startEditAction={this.state.startEditAction} 
 
             /> */}
-        <Column type="buttons" width={40}>
+        <Column type="buttons" width={35}>
           <CButton name="_edit" icon="edit" onClick={editIconClick} />
         </Column>
 
-        <Column width={140}
+        <Column width={145}
           dataField="number_doc"
        
           caption="Номер"
@@ -395,7 +397,7 @@ useEffect(() => {
           alignment="left"
           //          allowEditing={true}
         />
-        <Column width={120}
+        <Column width={130}
           dataField="date"
           caption="Дата"
           dataType="date"

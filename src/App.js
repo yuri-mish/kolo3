@@ -11,7 +11,15 @@ import { useScreenSizeClass } from './utils/media-query';
 import {Content} from './Content';
 import {UnauthenticatedContent} from './UnauthenticatedContent';
 
+import uaMessages from "devextreme/localization/messages/ua.json";
+import { locale, loadMessages } from "devextreme/localization";
+ 
+
 function App() {
+  
+  loadMessages(uaMessages);
+  locale("ua");
+  
   const { user, loading } = useAuth();
 
   if (loading) {

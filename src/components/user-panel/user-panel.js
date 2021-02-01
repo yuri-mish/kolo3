@@ -20,12 +20,13 @@ const UserPanel = function ({ menuMode }) {
   }
   const menuItems = useMemo(() => ([
     {
-      text: 'Profile',
+      text: 'Профіль',
       icon: 'user',
-      onClick: navigateToProfile
+      onClick: navigateToProfile,
+      disabled:true
     },
     {
-      text: 'Logout',
+      text: 'Вихід',
       icon: 'runner',
       onClick: userOut
     }

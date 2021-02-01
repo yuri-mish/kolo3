@@ -8,7 +8,7 @@ import { Partner } from './../../pages/partner';
 import { Column, FilterRow, Paging, Scrolling, Selection, StateStoring } from "devextreme-react/data-grid";
 import { v4 as uuid_v4 } from "uuid";
 
-import { API_HOST } from './../../constants';
+import { API_HOST, uaFilterRowText } from './../../constants';
 const cls_name = 'partners'
 const cls_fields = 'ref name edrpou id parent is_buyer is_supplier legal_address note name_full individual_legal inn'
 
@@ -227,10 +227,10 @@ export const PartnerBox = (props)=>{
             <Selection mode="single" />
       <Scrolling mode="virtual" rowRenderingMode="virtual" />
       <Paging enabled={true} pageSize={100} />
-      <FilterRow visible={true} />
+      <FilterRow visible={true} {...uaFilterRowText}/>
       <Column dataField="ref" visible={false} />
-      <Column dataField="name" caption="Назва" />
-      <Column dataField="edrpou" caption="код ЄДРПОУ" />
+      <Column dataField="name" caption="Назва" filterOperations={['contains','startswith','endswith' ]}/>
+      <Column dataField="edrpou" caption="код ЄДРПОУ" filterOperations={['startswith']} />
     </DataGrid>
   </DropDownBox>
   )

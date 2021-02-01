@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { Button, Form, Menu, Popup, TextArea } from "devextreme-react";
-import { useAuth } from "../contexts/auth";
+import { Form, Menu, TextArea } from "devextreme-react";
+//import { useAuth } from "../contexts/auth";
 import { useHistory } from "react-router-dom";
-import { useParams } from "react-router-dom";
+//import { useParams } from "react-router-dom";
 import { partnerDataSource } from "./../db/ds/dsPartners";
 import {
   GroupItem,
   ButtonItem,
   ButtonOptions,
-  Item,
+ //  Item,
   Label,
   SimpleItem,
 } from "devextreme-react/form";
 import {
-  Validator,
-  RequiredRule,
-  CompareRule,
-  EmailRule,
-  PatternRule,
-  StringLengthRule,
-  RangeRule,
+  // Validator,
+  // RequiredRule,
+  // CompareRule,
+  // EmailRule,
+  // PatternRule,
+  // StringLengthRule,
+  // RangeRule,
   AsyncRule,
-  CustomRule,
+  // CustomRule,
 } from "devextreme-react/form";
 import { API_HOST } from "./../constants";
 
@@ -33,7 +33,7 @@ var _ = require("lodash");
 
 export const Partner = (props) => {
   const history = useHistory();
-  let { id } = useParams();
+//  let { id } = useParams();
 
   const handleOpenDataBot = async (e) => {
 

@@ -8196,6 +8196,7 @@
   display: none;
 }
 .dx-toast-message {
+    white-space: pre-line;
   padding: 0;
 }
 .dx-toast-info {
