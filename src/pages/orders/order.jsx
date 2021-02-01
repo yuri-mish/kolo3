@@ -594,11 +594,11 @@ const formValidation =()=>{
             //allowAdding={true}
             allowDeleting={true}
             useIcons={true} confirmDelete = {false}>
-            <Texts confirmDeleteMessage="Вилучити?" deleteRow="вилучити" />
+            <Texts    confirmDeleteMessage="Вилучити?" deleteRow="вилучити" />
           </Editing>
 
           <Column
-            dataField="nom.ref"
+            dataField="nom.ref"    
             caption="Номенклатура"
             calculateDisplayValue={(data) => {
               return data.nom?.name;
