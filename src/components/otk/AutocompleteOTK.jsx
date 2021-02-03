@@ -53,7 +53,7 @@ export const AutocompleteOTK = (props) => {
   };
   const renderContent = () => {
     return (
-      <ScrollView width="100%" height="100%">
+      <ScrollView width="100%" height="100%" >
         <DataGrid
           ref={ref}
           dataSource={dataSource}
