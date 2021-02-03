@@ -5,7 +5,11 @@ import { useNavigation } from '../../contexts/navigation';
 import { useScreenSize } from '../../utils/media-query';
 import './side-navigation-menu.scss';
 
+
 import * as events from 'devextreme/events';
+import { useAuth } from '../../contexts/auth';
+
+
 
 export const SideNavigationMenu = function (props) {
   const {
@@ -17,11 +21,14 @@ export const SideNavigationMenu = function (props) {
   } = props;
 
   const { isLarge } = useScreenSize();
+  const { user } = useAuth();
+  
   function normalizePath () {    
     return navigation.map((item) => {
       if(item.path && !(/^\//.test(item.path))){ 
         item.path = `/${item.path}`;
       }
+      if (item.path==='/test') {  item.visible = (user.email === '999')}
       return {...item, expanded: isLarge}; 
     });
   }

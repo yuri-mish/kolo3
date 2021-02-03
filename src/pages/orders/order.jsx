@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
-import { TextBox, DateBox, Menu } from "devextreme-react";
+import { TextBox, DateBox, Menu, Autocomplete } from "devextreme-react";
 import Toolbar, { Item } from "devextreme-react/toolbar";
 import { locale } from "devextreme/localization";
 import moment from "moment";
@@ -17,18 +17,20 @@ import DataGrid, {
   Column,
   Editing,
   Texts,
+  Lookup,
 } from "devextreme-react/data-grid";
 import { v4 as uuid_v4 } from "uuid";
 
-import { PartnerBox} from "../../db/ds/dsPartners";
+import { PartnerBox } from "../../db/ds/dsPartners";
 import { nomsDataSource } from "../../db/ds/dsNoms";
 import { useParams } from "react-router-dom";
-import  notify  from 'devextreme/ui/notify';
-import { useHistory } from 'react-router-dom';
+import notify from "devextreme/ui/notify";
+import { useHistory } from "react-router-dom";
 import { convertToText } from "../../utils/filtfunc";
-import { API_HOST, uaFilterRowText } from './../../constants';
+import { API_HOST, uaFilterRowText } from "./../../constants";
+import { AutocompleteOTK } from "../../components/otk/AutocompleteOTK";
 
-var _ = require('lodash');
+var _ = require("lodash");
 
 export const Order = (props) => {
   const history = useHistory();
@@ -40,12 +42,14 @@ export const Order = (props) => {
   const OrderSchema = {
     date: moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss"),
     number_doc: "",
-    class_name:"doc.buyers_order",
+    class_name: "doc.buyers_order",
     partner: { ref: "", name: "" },
-    services: [{ nom: { row:1, ref: "", name: "<вибрати послугу>" }, price: 0 }],
+    services: [
+      { nom: { row: 1, ref: "", name: "<вибрати послугу>" }, price: 0 },
+    ],
     doc_amount: 0,
-    vat_included:true,
-    doc_currency:'',
+    vat_included: true,
+    doc_currency: "",
   };
 
   const [data, setData] = useState(OrderSchema);
@@ -90,29 +94,30 @@ export const Order = (props) => {
         return response.json();
       })
       .then(async (data) => {
-        if (data.data.buyers_orders && data.data.buyers_orders.length > 0){
-          const locpr = await loadPrices(data.data.buyers_orders[0].date)
-          data.data.buyers_orders[0].services.forEach((r)=>{
-              r.price  = locpr.find((p)=>{return p.nom === r.nom.ref})?.price||0
-              const calcPrice = Math.round(r.amount/r.quantity,-2)
-              r.nats = 0; r.spec = 0
-              if (calcPrice > r.price)
-                         r.nats = calcPrice - r.price
-              if (calcPrice < r.price && r.discount_percent_automatic === 0)
-                         r.spec = calcPrice           
-            })
+        if (data.data.buyers_orders && data.data.buyers_orders.length > 0) {
+          const locpr = await loadPrices(data.data.buyers_orders[0].date);
+          data.data.buyers_orders[0].services.forEach((r) => {
+            r.price =
+              locpr.find((p) => {
+                return p.nom === r.nom.ref;
+              })?.price || 0;
+            const calcPrice = Math.round(r.amount / r.quantity, -2);
+            r.nats = 0;
+            r.spec = 0;
+            if (calcPrice > r.price) r.nats = calcPrice - r.price;
+            if (calcPrice < r.price && r.discount_percent_automatic === 0)
+              r.spec = calcPrice;
+          });
           setData(data.data.buyers_orders[0]);
-        }
-        else {
-          loadPrices()
+        } else {
+          loadPrices();
         }
       });
   };
 
-  const loadPrices = async (date)=>{
-     
-    if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss")
-    const datePatam= `(date:"${date}")`
+  const loadPrices = async (date) => {
+    if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss");
+    const datePatam = `(date:"${date}")`;
     return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
@@ -127,24 +132,23 @@ export const Order = (props) => {
         return response.json();
       })
       .then((data) => {
-        console.log('=prices response:',data);
-        var pr = []
-        if (data.data.prices && data.data.prices.length > 0){
-          pr = data.data.prices
-          const vat_included = pr[0].vat_included === 'true'
-          const doc_currency = pr[0].currency
+        console.log("=prices response:", data);
+        var pr = [];
+        if (data.data.prices && data.data.prices.length > 0) {
+          pr = data.data.prices;
+          const vat_included = pr[0].vat_included === "true";
+          const doc_currency = pr[0].currency;
           setData((prevState) => ({
             ...prevState,
-            vat_included:vat_included,
-            doc_currency:doc_currency
+            vat_included: vat_included,
+            doc_currency: doc_currency,
           }));
         }
-          setPrices(pr);
-          return pr
+        setPrices(pr);
+        return pr;
       });
   };
 
-  
   useEffect(() => {
     load();
     loadPrices();
@@ -153,62 +157,71 @@ export const Order = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  locale("uk"); //!!!!+++
+  locale("ua"); //!!!!+++
   console.log("=" + data.date);
 
   const onQuantityChanged = (r) => {
-    calcrRow(rowData)
+    calcrRow(rowData);
   };
 
-  const calcrRow = (currentRowData) =>{
-    var doc_amount=0
-    if (!currentRowData.quantity) 
-          currentRowData.quantity=1
-    const pr = currentRowData.spec?currentRowData.spec:(currentRowData.price+(currentRowData.nats?currentRowData.nats:0))
+  const calcrRow = (currentRowData) => {
+    var doc_amount = 0;
+    if (!currentRowData.quantity) currentRowData.quantity = 1;
+    const pr = currentRowData.spec
+      ? currentRowData.spec
+      : currentRowData.price + (currentRowData.nats ? currentRowData.nats : 0);
     currentRowData.amount = pr * currentRowData.quantity;
-    if (isNaN(currentRowData.amount)) currentRowData.amount = 0
-    if (currentRowData.vat_rate==="НДС20") currentRowData.vat_amount = Math.round(currentRowData.amount/6, -2)
-      else currentRowData.vat_amount=0
-    data.services.forEach(r=>{doc_amount+= (r.row===currentRowData.row)?currentRowData.amount:r.amount})
+    if (isNaN(currentRowData.amount)) currentRowData.amount = 0;
+    if (currentRowData.vat_rate === "НДС20")
+      currentRowData.vat_amount = Math.round(currentRowData.amount / 6, -2);
+    else currentRowData.vat_amount = 0;
+    data.services.forEach((r) => {
+      doc_amount +=
+        r.row === currentRowData.row ? currentRowData.amount : r.amount;
+    });
     setData((prevState) => ({
       ...prevState,
-      doc_amount:doc_amount,
+      doc_amount: doc_amount,
       services: prevState.services.map((row) => {
-          return (row.row === currentRowData.row)?currentRowData:row
+        return row.row === currentRowData.row ? currentRowData : row;
       }),
-    
     }));
-    
-  }
-  const onchangeNom = async (newData, value, currentRowData)=>{
-    //console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData) 
-    var pricerow = prices.find((r)=>{return r.nom === value})
-    currentRowData.price = pricerow?pricerow.price:0
-    var res = await nomsDataSource.byKey(value)
+  };
+  const onchangeNom = async (newData, value, currentRowData) => {
+    //console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData)
+    var pricerow = prices.find((r) => {
+      return r.nom === value;
+    });
+    currentRowData.price = pricerow ? pricerow.price : 0;
+    var res = await nomsDataSource.byKey(value);
     if (res) {
-      currentRowData.content = res.name_full
-      if (res.vat_rate) currentRowData.vat_rate = res.vat_rate
+      currentRowData.content = res.name_full;
+      if (res.vat_rate) currentRowData.vat_rate = res.vat_rate;
     }
-    currentRowData.nom.ref = value
-    currentRowData.amount = 0
+    currentRowData.nom.ref = value;
+    currentRowData.amount = 0;
 
-    calcrRow(currentRowData)
-    
-    console.log('price=',currentRowData.price)
-  }
+    calcrRow(currentRowData);
 
-  const onchangeDate = async (param)=>{
+    console.log("price=", currentRowData.price);
+  };
+
+  const onchangeDate = async (param) => {
     setData((prevState) => ({
       ...prevState,
       date: moment(param.value).format("YYYY-MM-DDTHH:mm:ss"),
     }));
-    const newprice = await loadPrices(moment(param.value).format("YYYY-MM-DDTHH:mm:ss"))
-    data.services.forEach((row)=>{
-      var pricerow = newprice.find((priceRow)=>{return priceRow.nom === row.nom.ref})
-      row.price = pricerow?pricerow.price:0
-      calcrRow(row)
-    })
-  }
+    const newprice = await loadPrices(
+      moment(param.value).format("YYYY-MM-DDTHH:mm:ss")
+    );
+    data.services.forEach((row) => {
+      var pricerow = newprice.find((priceRow) => {
+        return priceRow.nom === row.nom.ref;
+      });
+      row.price = pricerow ? pricerow.price : 0;
+      calcrRow(row);
+    });
+  };
   const addButtonOptions = {
     icon: "plus",
     onClick: () => {
@@ -216,7 +229,7 @@ export const Order = (props) => {
       console.log("New row:", st);
       st.push({
         row: data.services.length + 1,
-        nom: { ref: undefined, name: "<послуга>" },
+        nom: { ref: undefined, name: "" },
       });
       setData((prevState) => ({
         ...prevState,
@@ -241,224 +254,248 @@ export const Order = (props) => {
     },
   };
 
+  const showError = (message) => {
+    notify({ message: message, position: { at: "center" } }, "error", 5000);
+  };
 
+  const cellTemplate = (r) => {
+    return (
+      <AutocompleteOTK
+        value={r.data.text}
+        searchField="name"
+        keyField="ref"
+        dataSource={nomsDataSource}
+        onChange={(e) => {
+          if (e) {
+            const services = data.services.slice();
+            services[r.data.rowIndex].nom.ref = e.ref || "";
+            services[r.data.rowIndex].nom.name = e.name || "";
+            r.data.setValue(e.ref || "", e.name || "");
+            setData((prevState) => ({
+              ...prevState,
+              services: services,
+            }));
+          }
+        }}
+      />
+    );
+  };
 
-  const showError = (message)=>{
-                    notify({message:message,position: { at: 'center'}}, "error", 5000);
-  }
+  // const cellTemplate = (r)=>{
+  //   return (
 
-const cellTemplate = (r)=>{
-  return (
-    
-  <DropDownBox
-  //width="200px"
-  value={r.data.value}
-  valueExpr="ref"
-  deferRendering={false}
-  displayExpr="name"
-  placeholder='...вкажіть послугу ...'
-  showClearButton={false}
-  dataSource={nomsDataSource}
-  dropDownOptions={{width:"800px"}}
+  //   <DropDownBox
+  //   //width="200px"
+  //   value={r.data.value}
+  //   valueExpr="ref"
+  //   deferRendering={false}
+  //   displayExpr="name"
+  //   placeholder='...вкажіть послугу ...'
+  //   showClearButton={false}
+  //   dataSource={nomsDataSource}
+  //   dropDownOptions={{width:"800px"}}
 
->
+  // >
 
-  <Menu
-    onItemClick={(e) => {
-      console.log('menu item:',e);
-    }}
-    dataSource={[
-      {
-        text: "Вибрати",
-      },
-      // {
-      //   text: "Додати",
-      // },
-      {
-        text: "Закрити",
-      },
-      
-      {
-        text: "Інше",
-        items: [
-          {
-            text: " інше 1",
-          },
-          {
-            text: "штше 2",
-          },
-        ],
-      },
-    ]}></Menu>
+  //   <Menu
+  //     onItemClick={(e) => {
+  //       console.log('menu item:',e);
+  //     }}
+  //     dataSource={[
+  //       {
+  //         text: "Вибрати",
+  //       },
+  //       // {
+  //       //   text: "Додати",
+  //       // },
+  //       {
+  //         text: "Закрити",
+  //       },
 
-  <DataGrid
-    remoteOperations={true}
-    dataSource={nomsDataSource}
-    hoverStateEnabled={true}
-     onSelectionChanged={(e) => {
-      if (!r.data.data.nom)  r.data.data.nom={ref:'',nom:''}
-      r.data.setValue(e.selectedRowsData[0].ref,e.selectedRowsData[0].name)
-  //  console.log('===onSelectionChanged:',e);
-    }}
-    
-    height="90%">
-    
-    <Selection mode="single" />
-    <Scrolling mode="virtual" rowRenderingMode="virtual" />
-    <Paging enabled={true} pageSize={200} />
-    <FilterRow visible={true} {...uaFilterRowText}/>
-    <Column dataField="ref" visible={false} />
-    <Column dataField="name" caption="Назва" width="150px"/>
-    <Column dataField="name_full" caption="Повна назва"/> 
-    
-  </DataGrid>
-  
-</DropDownBox>
+  //       {
+  //         text: "Інше",
+  //         items: [
+  //           {
+  //             text: " інше 1",
+  //           },
+  //           {
+  //             text: "штше 2",
+  //           },
+  //         ],
+  //       },
+  //     ]}></Menu>
 
-  )
-}
+  //   <DataGrid
+  //     remoteOperations={true}
+  //     dataSource={nomsDataSource}
+  //     hoverStateEnabled={true}
+  //      onSelectionChanged={(e) => {
+  //       if (!r.data.data.nom)  r.data.data.nom={ref:'',nom:''}
+  //       r.data.setValue(e.selectedRowsData[0].ref,e.selectedRowsData[0].name)
+  //   //  console.log('===onSelectionChanged:',e);
+  //     }}
 
-const changeReq = (e)=>{
-  setData((prevState) => ({
+  //     height="90%">
+
+  //     <Selection mode="single" />
+  //     <Scrolling mode="virtual" rowRenderingMode="virtual" />
+  //     <Paging enabled={true} pageSize={200} />
+  //     <FilterRow visible={true} {...uaFilterRowText}/>
+  //     <Column dataField="ref" visible={false} />
+  //     <Column dataField="name" caption="Назва" width="150px"/>
+  //     <Column dataField="name_full" caption="Повна назва"/>
+
+  //   </DataGrid>
+
+  // </DropDownBox>
+
+  //   )
+  // }
+
+  const changeReq = (e) => {
+    setData((prevState) => ({
       ...prevState,
-      [e.element.id]:e.event.target.value
-    
+      [e.element.id]: e.event.target.value,
     }));
-}
+  };
 
-const formValidation =()=>{
-  let isValid = true
-  let errorMessage=''
-  if (!data.partner||!data.partner.ref){
-      isValid = false
-      errorMessage += 'Помилка: Не заповнено реквізит Контрагент\r\n'
+  const formValidation = () => {
+    let isValid = true;
+    let errorMessage = "";
+    if (!data.partner || !data.partner.ref) {
+      isValid = false;
+      errorMessage += "Помилка: Не заповнено реквізит Контрагент\r\n";
     }
-  if (data.services.length===0){
-      isValid = false
-      errorMessage += 'Помилка: Таблична частина порожня\r\n'
-    }
-
-  data.services.forEach((r)=>{
-     if (!r.nom||!r.nom.ref) 
-     {
-      isValid = false
-      errorMessage += `Помилка: (рядок №${r.row}) - не заповнена послуга\r\n`
-    }
-    if (r.quantity<1) 
-     {
-      isValid = false
-      errorMessage += `Помилка: (рядок №${r.row}) - невірна кількість\r\n`
+    if (data.services.length === 0) {
+      isValid = false;
+      errorMessage += "Помилка: Таблична частина порожня\r\n";
     }
 
-  })  
-  if (!isValid) showError(errorMessage)
-  return isValid
-}
+    data.services.forEach((r) => {
+      if (!r.nom || !r.nom.ref) {
+        isValid = false;
+        errorMessage += `Помилка: (рядок №${r.row}) - не заповнена послуга\r\n`;
+      }
+      if (r.quantity < 1) {
+        isValid = false;
+        errorMessage += `Помилка: (рядок №${r.row}) - невірна кількість\r\n`;
+      }
+    });
+    if (!isValid) showError(errorMessage);
+    return isValid;
+  };
 
   return (
     <div>
-     <Menu 
-        onItemClick={async e => {
-  
-          switch(e.itemData.id){
-           case "ok": {
-            if (!formValidation()) return
-              const doctosave = _.cloneDeep(data)
-            if (id==="new"){
-              doctosave._id='doc.buyers_order|'+uuid_v4()
-              doctosave.class_name="doc.buyers_order"
-            }
-            doctosave.partner=doctosave.partner.ref  
-            if (doctosave.organization) doctosave.organization=doctosave.organization.ref  
-            if (doctosave.responsible) delete doctosave.responsible  
-            if (doctosave.number_doc) delete doctosave.number_doc
+      <Menu
+        onItemClick={async (e) => {
+          switch (e.itemData.id) {
+            case "ok": {
+              if (!formValidation()) return;
+              const doctosave = _.cloneDeep(data);
+              if (id === "new") {
+                doctosave._id = "doc.buyers_order|" + uuid_v4();
+                doctosave.class_name = "doc.buyers_order";
+              }
+              doctosave.partner = doctosave.partner.ref;
+              if (doctosave.organization)
+                doctosave.organization = doctosave.organization.ref;
+              if (doctosave.responsible) delete doctosave.responsible;
+              if (doctosave.number_doc) delete doctosave.number_doc;
 
-            doctosave.services.forEach(r=>{
-              if (r.spec) delete r.spec
-              if (r.nats) delete r.spec
-              return r.nom = r.nom.ref
-          })
-            const q = JSON.stringify({
-              query: `mutation{setBuyersOrder(input:${convertToText(doctosave)}) {
+              doctosave.services.forEach((r) => {
+                if (r.spec) delete r.spec;
+                if (r.nats) delete r.spec;
+                return (r.nom = r.nom.ref);
+              });
+              const q = JSON.stringify({
+                query: `mutation{setBuyersOrder(input:${convertToText(
+                  doctosave
+                )}) {
                     _id
                       }}`,
-            });
-
-            const response = await fetch(API_HOST, {
-              method: "POST",
-              credentials: "include",
-              body: q,
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-            console.log(response);
-            const datar = await response.json();
-            console.log(datar);
-            if (datar.errors) {
-              datar.errors.forEach(err => {
-                showError("Помилка запису: " + err.message);
               });
+
+              const response = await fetch(API_HOST, {
+                method: "POST",
+                credentials: "include",
+                body: q,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+              console.log(response);
+              const datar = await response.json();
+              console.log(datar);
+              if (datar.errors) {
+                datar.errors.forEach((err) => {
+                  showError("Помилка запису: " + err.message);
+                });
+              } else {
+                history.goBack();
+              }
+              break;
             }
-            else { history.goBack(); }
-            break
-          }
-          case "close": {
+            case "close": {
               history.goBack();
-              break
+              break;
+            }
+            case "print": {
+              var windowObjectReference = null;
+              var winParam = ""; // `width=${window.screen.width*8/10},left=${window.screen.width/10}`
+              windowObjectReference = window.open(
+                e.itemData.url,
+                "printwin",
+                winParam
+              );
+              windowObjectReference.focus();
+              break;
+            }
+            default: {
+            }
           }
-          case "print": {
-            var windowObjectReference = null;
-            var winParam = '';// `width=${window.screen.width*8/10},left=${window.screen.width/10}`
-            windowObjectReference = window.open(e.itemData.url, "printwin",winParam)
-            windowObjectReference.focus()
-            break
-          }
-          default:{}
-          
-        }}}
+        }}
         dataSource={[
           {
             id: "ok",
             text: "Закрити і зберегти",
-            icon:"save"
+            icon: "save",
           },
-          { id:"close",
-            text: "Закрити",
-            icon:"close"
+          { id: "close", text: "Закрити", icon: "close" },
+          {
+            text: "Зберегти",
+            disabled: true,
           },
-          { 
-            text: "Зберегти", disabled:true
-          },
-          { text:"Друк",
-            icon:"print",
-              items:[
-                {
-                id:"print",
-                text:"Рахунок",
-                url:API_HOST+`/printform/${id}/inv`,
-                disabled:!data.number_doc,
+          {
+            text: "Друк",
+            icon: "print",
+            items: [
+              {
+                id: "print",
+                text: "Рахунок",
+                url: API_HOST + `/printform/${id}/inv`,
+                disabled: !data.number_doc,
               },
               {
-                id:"print",
-                text:"Договір",
-                url:API_HOST+`/printform/${id}/dog`,
-                disabled:!data.number_doc,
+                id: "print",
+                text: "Договір",
+                url: API_HOST + `/printform/${id}/dog`,
+                disabled: !data.number_doc,
               },
               {
-                id:"print",
-                text:"Договір сертифікації",
-                url:API_HOST+`/printform/${id}/dogs`,
-                disabled:false,//!data.number_doc,
+                id: "print",
+                text: "Договір сертифікації",
+                url: API_HOST + `/printform/${id}/dogs`,
+                disabled: false, //!data.number_doc,
               },
               {
-                id:"print",
-                text:"Договір для Казначейства",
-                url:API_HOST+`/printform/${id}/dogk`,
-                disabled:!data.number_doc,
+                id: "print",
+                text: "Договір для Казначейства",
+                url: API_HOST + `/printform/${id}/dogk`,
+                disabled: !data.number_doc,
               },
-        ]
-      },  
+            ],
+          },
           // {
           //   text: "Інше",
           //   items: [
@@ -474,7 +511,12 @@ const formValidation =()=>{
       <div style={{ display: "flex" }}>
         <div style={{ display: "flex", paddingRight: "1rem" }}>
           <TextBox disabled={true} value="Номер"></TextBox>
-          <TextBox readOnly={true} value={data.number_doc} placeholder="...номер документа..." hint="номер документу присвоєний головним офісом"/>
+          <TextBox
+            readOnly={true}
+            value={data.number_doc}
+            placeholder="...номер документа..."
+            hint="номер документу присвоєний головним офісом"
+          />
         </div>
         <TextBox value="Дата"></TextBox>
         <DateBox
@@ -498,25 +540,39 @@ const formValidation =()=>{
 
       <div style={{ display: "flex", paddingTop: "1rem" }}>
         <TextBox value="Контрагент"></TextBox>
-        <PartnerBox value={data.partner?.ref} onChange={(e) => {
-              setData((prevState) => ({
-                ...prevState,
-                partner: {
-                  ref: e.ref,
-                  name: e.name
-//                  name: e.selectedRowsData[0].name,
-                },
-              }));
-            }}/>
-      </div> 
+        <PartnerBox
+          value={data.partner?.ref}
+          onChange={(e) => {
+            setData((prevState) => ({
+              ...prevState,
+              partner: {
+                ref: e.ref,
+                name: e.name,
+                //                  name: e.selectedRowsData[0].name,
+              },
+            }));
+          }}
+        />
+      </div>
       <div style={{ display: "flex" }}>
-          <TextBox value="Особа"></TextBox>
-          <TextBox  width= "80%" id="ClientPerson" value={data.ClientPerson} placeholder="...контактана особа..." onChange={changeReq}/>
-          <div style={{ display: "flex", paddingRight: "1rem" }}>
+        <TextBox value="Особа"></TextBox>
+        <TextBox
+          width="80%"
+          id="ClientPerson"
+          value={data.ClientPerson}
+          placeholder="...контактана особа..."
+          onChange={changeReq}
+        />
+        <div style={{ display: "flex", paddingRight: "1rem" }}>
           <TextBox value="Телефон"></TextBox>
-          <TextBox id="ClientPersonPhone" value={data.ClientPersonPhone} placeholder="... номер телефон" onChange={changeReq}/>
+          <TextBox
+            id="ClientPersonPhone"
+            value={data.ClientPersonPhone}
+            placeholder="... номер телефон"
+            onChange={changeReq}
+          />
         </div>
-        </div> 
+      </div>
 
       <div style={{ paddingTop: "1rem" }}>
         <Toolbar>
@@ -535,33 +591,32 @@ const formValidation =()=>{
           rowAlternationEnabled={true}
           showBorders={true}
           allowColumnResizing={true}
-          columnResizingMode='widget'
-//          dataSource={data.services.slice()}
-          dataSource={data.services.map((r)=>{return r})}
-         
+          columnResizingMode="widget"
+          //          dataSource={data.services.slice()}
+          dataSource={data.services} //.services.map((r)=>{return r})}
           hoverStateEnabled={true}
           //activeStateEnabled = {true}
           //selectedRowKeys={this.state.gridBoxValue}
           onValueChanged={(e) => {
             console.log("=999=", e);
           }}
-          onSelectionChanged={(e) => {
-            console.log("=9=", e);
-            setData((prevState) => ({
-              ...prevState,
-              partner: {
-                ref: e.selectedRowsData[0].ref,
-                name: e.selectedRowsData[0].name,
-              },
-            }));
-          }}
+          // onSelectionChanged={(e) => {
+          //   console.log("=9=", e);
+          //   setData((prevState) => ({
+          //     ...prevState,
+          //     partner: {
+          //       ref: e.selectedRowsData[0].ref,
+          //       name: e.selectedRowsData[0].name,
+          //     },
+          //   }));
+          // }}
           selectTextOnEditStart={true}
           onInitNewRow={(e) => {
             var st = data.services.slice();
             console.log("New row:", st);
             st.push({
               row: data.services.length + 1,
-              nom: { ref: undefined, name: "<послуга>" },
+              nom: { ref: undefined, name: "" },
             });
             setData((prevState) => ({
               ...prevState,
@@ -593,39 +648,92 @@ const formValidation =()=>{
             allowUpdating={true}
             //allowAdding={true}
             allowDeleting={true}
-            useIcons={true} confirmDelete = {false}>
-            <Texts    confirmDeleteMessage="Вилучити?" deleteRow="вилучити" />
+            useIcons={true}
+            confirmDelete={false}>
+            <Texts confirmDeleteMessage="Вилучити?" deleteRow="вилучити" />
           </Editing>
-
           <Column
-            dataField="nom.ref"    
+            dataField="nom.ref"
             caption="Номенклатура"
             calculateDisplayValue={(data) => {
               return data.nom?.name;
             }}
             setCellValue={onchangeNom}
             editCellComponent={cellTemplate}
-            placeholder="...вкажіть послугу.."
-            >
+            placeholder="...вкажіть послугу..">
+            <Lookup
+              dataSource={nomsDataSource}
+              displayExpr="name"
+              valueExpr="ref">
+              <DataGrid dataSource={nomsDataSource} />
+            </Lookup>
           </Column>
-          <Column dataField="price" caption="Ціна" allowEditing={false} width={100}
-            headerCellRender={ (data) =>{ return  <p 
-                    //style={{ 'font-size': '16px' }
-                    >Ціна<br/>(прайс) </p>;
+          <Column
+            dataField="price"
+            caption="Ціна"
+            allowEditing={false}
+            width={100}
+            headerCellRender={(data) => {
+              return (
+                <p
+                //style={{ 'font-size': '16px' }
+                >
+                  Ціна
+                  <br />
+                  (прайс){" "}
+                </p>
+              );
             }}
           />
-          <Column dataField="quantity" caption="Кількість" width={80} allowEditing={true}/>
-          <Column dataField="spec" caption="СпецЦіна" allowEditing={false} width={100}/>
-          <Column dataField="discount_percent_automatic" caption="%скидки" allowEditing={false} width={80} />
-          <Column dataField="nats" caption="Націнка" value={100} allowEditing={false} width={80}  /> {/* calculateCellValue={calcNats} */}
-          <Column dataField="amount" caption="Сума" allowEditing={false} width={100}/>
-          <Column dataField="gos_code" caption="Держ.номер" allowEditing={true}/>
-          <Column dataField="vin_code" caption="VIN код" allowEditing={true}/>
+          <Column
+            dataField="quantity"
+            caption="Кількість"
+            width={80}
+            allowEditing={true}
+          />
+          <Column
+            dataField="spec"
+            caption="СпецЦіна"
+            allowEditing={false}
+            width={100}
+          />
+          <Column
+            dataField="discount_percent_automatic"
+            caption="%скидки"
+            allowEditing={false}
+            width={80}
+          />
+          <Column
+            dataField="nats"
+            caption="Націнка"
+            value={100}
+            allowEditing={false}
+            width={80}
+          />{" "}
+          {/* calculateCellValue={calcNats} */}
+          <Column
+            dataField="amount"
+            caption="Сума"
+            allowEditing={false}
+            width={100}
+          />
+          <Column
+            dataField="gos_code"
+            caption="Держ.номер"
+            allowEditing={true}
+          />
+          <Column dataField="vin_code" caption="VIN код" allowEditing={true} />
         </DataGrid>
       </div>
       <div style={{ display: "flex", paddingRight: "1rem", width: "800" }}>
-      <TextBox  width= "20%" value="Коментар"></TextBox>
-          <TextBox  width= "80%"  id="note" value={data.note} placeholder="коментар" onChange={changeReq}/>
+        <TextBox width="20%" value="Коментар"></TextBox>
+        <TextBox
+          width="80%"
+          id="note"
+          value={data.note}
+          placeholder="коментар"
+          onChange={changeReq}
+        />
       </div>
     </div>
   );

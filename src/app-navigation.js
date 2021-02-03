@@ -22,5 +22,12 @@ export const navigation = [
       //   path: '/tasks'
       // }
     ]
+  },
+  {
+    text: 'Тести',
+    icon: 'warning',
+    path: '/test',
+    visible:false,
+    
   }
   ];

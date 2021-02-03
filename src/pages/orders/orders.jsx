@@ -26,9 +26,9 @@ import { API_HOST, resetOperationText, txtOperationDescriptions, uaFilterRow, ua
 import { PartnerBox, partnerDataSource } from "../../db/ds/dsPartners";
 
 import { useSubscription, gql} from "@apollo/client";
-import Cookies  from 'universal-cookie';
+//import Cookies  from 'universal-cookie';
 //import { useCookies } from 'react-cookie';
-import { locale } from 'devextreme/localization';
+//import { locale } from 'devextreme/localization';
 
 
 const handleErrors = (response) => {
@@ -319,25 +319,25 @@ useEffect(() => {
                 id:"print",
                 text:"Рахунок",
                 url:API_HOST+`/printform/${currRow.ref}/inv`,
-     //           disabled:!data.number_doc,
+                disabled:!(currRow.ref&&currRow.number_doc),
               },
               {
                 id:"print",
                 text:"Договір",
                 url:API_HOST+`/printform/${currRow.ref}/dog`,
-       //         disabled:!data.number_doc,
+                disabled:!(currRow.ref&&currRow.number_doc),
               },
               {
                 id:"print",
                 text:"Договір сертифікації",
                 url:API_HOST+`/printform/${currRow.ref}/dogs`,
-                disabled:false,//!data.number_doc,
+                disabled:!(currRow.ref&&currRow.number_doc),
               },
               {
                 id:"print",
                 text:"Договір для Казначейства",
                 url:API_HOST+`/printform/${currRow.ref}/dogk`,
-         //       disabled:!data.number_doc,
+                disabled:!(currRow.ref&&currRow.number_doc),
               },
         ]
       },  
