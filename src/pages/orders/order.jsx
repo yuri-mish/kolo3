@@ -1,19 +1,19 @@
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
-import { TextBox, DateBox, Menu, Autocomplete } from "devextreme-react";
+import { TextBox, DateBox, Menu } from "devextreme-react";
 import Toolbar, { Item } from "devextreme-react/toolbar";
 import { locale } from "devextreme/localization";
 import moment from "moment";
 //import {lodash as _ } from "lodash"
 //import Lookup from "devextreme-react/lookup";
 //import { RemoteOperations } from "devextreme-react/data-grid";
-import { DropDownBox } from "devextreme-react/drop-down-box";
+//import { DropDownBox } from "devextreme-react/drop-down-box";
 import DataGrid, {
-  Selection,
-  Paging,
-  FilterRow,
-  Scrolling,
+ // Selection,
+ // Paging,
+ // FilterRow,
+ // Scrolling,
   Column,
   Editing,
   Texts,
@@ -45,7 +45,7 @@ export const Order = (props) => {
     class_name: "doc.buyers_order",
     partner: { ref: "", name: "" },
     services: [
-      { nom: { row: 1, ref: "", name: "<вибрати послугу>" }, price: 0 },
+      { nom: { row: 1, ref: "", name: "" }, price: 0 },
     ],
     doc_amount: 0,
     vat_included: true,
@@ -158,7 +158,7 @@ export const Order = (props) => {
   }, []);
 
   locale("ua"); //!!!!+++
-  console.log("=" + data.date);
+  //console.log("=" + data.date);
 
   const onQuantityChanged = (r) => {
     calcrRow(rowData);
@@ -203,7 +203,7 @@ export const Order = (props) => {
 
     calcrRow(currentRowData);
 
-    console.log("price=", currentRowData.price);
+    //console.log("price=", currentRowData.price);
   };
 
   const onchangeDate = async (param) => {
@@ -226,7 +226,7 @@ export const Order = (props) => {
     icon: "plus",
     onClick: () => {
       var st = data.services.slice();
-      console.log("New row:", st);
+      // console.log("New row:", st);
       st.push({
         row: data.services.length + 1,
         nom: { ref: undefined, name: "" },
@@ -238,21 +238,20 @@ export const Order = (props) => {
     },
   };
 
-  const deleteButtonOptions = {
-    icon: "minus",
-    disabled: false,
+  // const deleteButtonOptions = {
+  //   icon: "minus",
+  //   disabled: false,
 
-    onClick: () => {
-      var st = data.services.filter((row) => row.row !== rowData?.row);
-      deleteButtonOptions.disabled = st.length === 0;
-      //      console.log('delete row:',st)
-
-      setData((prevState) => ({
-        ...prevState,
-        services: st,
-      }));
-    },
-  };
+  //   onClick: () => {
+  //     var st = data.services.filter((row) => row.row !== rowData?.row);
+  //     deleteButtonOptions.disabled = st.length === 0;
+  //     //      console.log('delete row:',st)
+  //     setData((prevState) => ({
+  //       ...prevState,
+  //       services: st,
+  //     }));
+  //   },
+  // };
 
   const showError = (message) => {
     notify({ message: message, position: { at: "center" } }, "error", 5000);
@@ -265,6 +264,12 @@ export const Order = (props) => {
         searchField="name"
         keyField="ref"
         dataSource={nomsDataSource}
+        dataSourceUserOptions = {{selectServices : true}}
+        columns = {[
+              { dataField: "name", width: "80", caption: "Назва" },
+              { dataField: "name_full", caption: "Повна назва" },
+            ]
+          }
         onChange={(e) => {
           if (e) {
             const services = data.services.slice();
@@ -387,7 +392,7 @@ export const Order = (props) => {
 
   return (
     <div>
-      <Menu
+      <Menu 
         onItemClick={async (e) => {
           switch (e.itemData.id) {
             case "ok": {
@@ -424,9 +429,9 @@ export const Order = (props) => {
                   "Content-Type": "application/json",
                 },
               });
-              console.log(response);
+              // console.log(response);
               const datar = await response.json();
-              console.log(datar);
+              // console.log(datar);
               if (datar.errors) {
                 datar.errors.forEach((err) => {
                   showError("Помилка запису: " + err.message);
@@ -457,56 +462,46 @@ export const Order = (props) => {
         }}
         dataSource={[
           {
-            id: "ok",
-            text: "Закрити і зберегти",
-            icon: "save",
+            id: 'ok',
+            text: 'Закрити і зберегти',
+            icon: 'save',
           },
-          { id: "close", text: "Закрити", icon: "close" },
+          { id: 'close', text: 'Закрити', icon: 'close' },
           {
-            text: "Зберегти",
+            text: 'Зберегти',
             disabled: true,
           },
           {
-            text: "Друк",
-            icon: "print",
+            text: 'Друк',
+            icon: 'print',
             items: [
               {
-                id: "print",
-                text: "Рахунок",
+                id: 'print',
+                text: 'Рахунок',
                 url: API_HOST + `/printform/${id}/inv`,
                 disabled: !data.number_doc,
               },
               {
-                id: "print",
-                text: "Договір",
+                id: 'print',
+                text: 'Договір',
                 url: API_HOST + `/printform/${id}/dog`,
                 disabled: !data.number_doc,
               },
               {
-                id: "print",
-                text: "Договір сертифікації",
+                id: 'print',
+                text: 'Договір сертифікації',
                 url: API_HOST + `/printform/${id}/dogs`,
                 disabled: false, //!data.number_doc,
               },
               {
-                id: "print",
-                text: "Договір для Казначейства",
+                id: 'print',
+                text: 'Договір для Казначейства',
                 url: API_HOST + `/printform/${id}/dogk`,
                 disabled: !data.number_doc,
               },
             ],
           },
-          // {
-          //   text: "Інше",
-          //   items: [
-          //     {
-          //       text: " інше 1",
-          //     },
-          //     {
-          //       text: "штше 2",
-          //     },
-          //   ],
-          // },
+   
         ]}></Menu>
       <div style={{ display: "flex" }}>
         <div style={{ display: "flex", paddingRight: "1rem" }}>
@@ -522,14 +517,7 @@ export const Order = (props) => {
         <DateBox
           id="date"
           type="datetime"
-          //        min={this.minDate}
-          //                max={this.now}
-          //defaultValue ={Date.now()}
-
-          value={
-            data.date
-            //                        data.date?Date.parse(data.date):Date.now()
-          }
+          value={data.date}
           displayFormat={"dd-MM-yyyy HH:mm:ss"}
           useMaskBehavior={true}
           onValueChanged={onchangeDate}
@@ -548,7 +536,6 @@ export const Order = (props) => {
               partner: {
                 ref: e.ref,
                 name: e.name,
-                //                  name: e.selectedRowsData[0].name,
               },
             }));
           }}
@@ -592,24 +579,13 @@ export const Order = (props) => {
           showBorders={true}
           allowColumnResizing={true}
           columnResizingMode="widget"
-          //          dataSource={data.services.slice()}
-          dataSource={data.services} //.services.map((r)=>{return r})}
+          dataSource={data.services} 
           hoverStateEnabled={true}
           //activeStateEnabled = {true}
           //selectedRowKeys={this.state.gridBoxValue}
           onValueChanged={(e) => {
             console.log("=999=", e);
           }}
-          // onSelectionChanged={(e) => {
-          //   console.log("=9=", e);
-          //   setData((prevState) => ({
-          //     ...prevState,
-          //     partner: {
-          //       ref: e.selectedRowsData[0].ref,
-          //       name: e.selectedRowsData[0].name,
-          //     },
-          //   }));
-          // }}
           selectTextOnEditStart={true}
           onInitNewRow={(e) => {
             var st = data.services.slice();
@@ -627,11 +603,11 @@ export const Order = (props) => {
             rowData = e.row.data;
             if (e.dataField === "quantity") {
               e.editorElement.onchange = onQuantityChanged;
-              console.log(e);
+              //console.log(e);
             }
           }}
           onRowRemoved={(e) => {
-            console.log("Row remove", e); //+++
+            //console.log("Row remove", e); //+++
 
             var st = data.services.filter((row) => row.row !== e.data.row);
             var i = 1;

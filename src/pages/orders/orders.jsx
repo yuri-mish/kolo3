@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/auth";
-import "devextreme/dist/css/dx.common.css";
-import "devextreme/dist/css/dx.light.css";
+//import "devextreme/dist/css/dx.common.css";
+//import "devextreme/dist/css/dx.light.css";
 
 import CustomStore from "devextreme/data/custom_store";
 import DataGrid, {

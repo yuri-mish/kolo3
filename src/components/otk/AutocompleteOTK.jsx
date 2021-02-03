@@ -1,12 +1,14 @@
-import { Popup, ScrollView, TextBox } from "devextreme-react";
+import { Popup, ScrollView} from "devextreme-react";
+import {TextBox, Button as TextBoxButton } from 'devextreme-react/text-box';
 import React, { useEffect, useRef, useState } from "react";
-import { nomsDataSource } from "../../db/ds/dsNoms";
 import { DataGrid } from "devextreme-react";
 import { Position } from "devextreme-react/popup";
 
-nomsDataSource.userOptions.selectServices = true;
-
 export const AutocompleteOTK = (props) => {
+  const dataSource = props.dataSource;
+  if (props.dataSourceUserOptions)
+    dataSource.userOptions = props.dataSourceUserOptions;
+
   const searchField = props.searchField || "name";
   const keyField = props.keyField || "ref";
 
@@ -26,7 +28,6 @@ export const AutocompleteOTK = (props) => {
   };
 
   useEffect(() => {
-    // console.log('==result:',result)
     setGridVisible(false);
     if (ref.current && props.onChange) {
       const r = ref.current.instance.getSelectedRowsData()[0];
@@ -55,15 +56,10 @@ export const AutocompleteOTK = (props) => {
       <ScrollView width="100%" height="100%">
         <DataGrid
           ref={ref}
-          dataSource={props.dataSource}
+          dataSource={dataSource}
           paging={false}
           selection={{ mode: "single" }}
-          columns={
-            props.columns || [
-              { dataField: "name", width: "80", caption: "Назва" },
-              { dataField: "name_full", caption: "Повна назва" },
-            ]
-          }
+          columns={props.columns || [searchField]}
           onRowClick={rowClick}
         />
       </ScrollView>
@@ -73,7 +69,7 @@ export const AutocompleteOTK = (props) => {
     let _rowIndex = undefined;
     switch (e.event.code) {
       case "ArrowDown": {
-        if(!gridVisible) setGridVisible(true)
+        if (!gridVisible) setGridVisible(true);
         _rowIndex =
           rowIndex >= 0
             ? Math.min(rowIndex + 1, ref.current.instance.totalCount() - 1)
@@ -118,10 +114,22 @@ export const AutocompleteOTK = (props) => {
         onInput={changeValue}
         onKeyDown={enterKey}
         value={value}>
-      </TextBox>
+          <TextBoxButton
+                  name='aaa'
+                  location="after"
+                  type = 'default'
+                  options={{
+                    icon: 'spindown',
+                    onClick:() => {
+                      setGridVisible(!gridVisible)
+                    }
+                  }}
+                                  />
+        </TextBox>
       <Popup
+        height={300}
         visible={gridVisible}
-        showTitle={props.showTitle||false}
+        showTitle={props.showTitle || false}
         contentRender={renderContent}
         shading={false}>
         <Position my="left top" at="left bottom" of="#tgrt" />

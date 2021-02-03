@@ -1944,7 +1944,7 @@
 }
 .dx-button.dx-button-default {
   border-radius: 4px;
-  background-color: #ff5722;
+  background-color: #0040ff;
   color: #fff;
   -webkit-box-shadow: 0 1px 3px rgba(0,0,0,.24);
   box-shadow: 0 1px 3px rgba(0,0,0,.24);
@@ -1953,7 +1953,7 @@
   color: #fff;
 }
 .dx-button.dx-button-default.dx-state-hover {
-  background-color: #f63b00;
+  background-color: #000872;
   -webkit-box-shadow: 0 1px 3px rgba(0,0,0,.24);
   box-shadow: 0 1px 3px rgba(0,0,0,.24);
 }
@@ -7063,7 +7063,7 @@
   margin-left: -12px;
 }
 .dx-menu-item {
-  color: rgba(117,117,117,.87);
+  color: rgba(0, 0, 0, 0.87);
 }
 .dx-menu-item.dx-state-focused,
 .dx-menu-item.dx-state-hover {
@@ -7387,7 +7387,7 @@
   padding: 0;
 }
 .dx-toolbar .dx-toolbar-items-container {
-  height: 76px;
+  height: 36px;
   overflow: visible;
 }
 .dx-toolbar .dx-toolbar-menu-container {
@@ -11282,7 +11282,7 @@
 .dx-datagrid .dx-link {
   text-decoration: underline;
   cursor: pointer;
-  color: #ff5722;
+  color: #0040ff;
 }
 .dx-datagrid .dx-row-lines > td {
   border-bottom: 1px solid #e0e0e0;
@@ -11583,11 +11583,11 @@
 }
 .dx-datagrid-headers .dx-datagrid-table .dx-row > td {
   border-bottom: 1px solid #e0e0e0;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  line-height: 16px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  line-height: 14px;
   font-weight: 500;
-  font-size: 12px;
+  font-size: 14px;
 }
 .dx-datagrid-headers .dx-datagrid-table .dx-row>td .dx-sort,
 .dx-datagrid-headers .dx-datagrid-table .dx-row>td .dx-sort-indicator,
@@ -11601,11 +11601,11 @@
   background-color: rgba(0,0,0,.04);
 }
 .dx-datagrid-headers.dx-header-multi-row .dx-datagrid-content .dx-datagrid-table .dx-row.dx-header-row .dx-command-select {
-  padding-bottom: 19px;
+  padding-bottom: 10px;
 }
 .dx-datagrid-headers.dx-header-multi-row .dx-datagrid-content .dx-datagrid-table .dx-row.dx-header-row > td {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   vertical-align: bottom;
   border-right: 1px solid #e0e0e0;
 }
@@ -11619,7 +11619,7 @@
   margin-left: 0;
 }
 .dx-datagrid-filter-row .dx-menu .dx-menu-horizontal .dx-menu-items-container {
-  height: 100%;
+  height: 50%;
   top: 2px;
   position: absolute;
 }
