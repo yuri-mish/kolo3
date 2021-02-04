@@ -4328,3 +4328,14 @@
   left: 50%;
   margin-left: -12px;
 }
+.otk-header .dx-field-label {
+  color: rgba(59, 59, 59, 0.87);
+  font-size: 14px;
+  cursor: default;
+  -webkit-align-self: center;
+  -ms-flex-item-align: center;
+  align-self: center;
+  width:"10%";
+  padding-left: 15px;
+  padding-right: 15px;
+}

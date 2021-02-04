@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Form, Menu, TextArea } from "devextreme-react";
-//import { useAuth } from "../contexts/auth";
 import { useHistory } from "react-router-dom";
-//import { useParams } from "react-router-dom";
 import { partnerDataSource } from "./../db/ds/dsPartners";
 import {
   GroupItem,
   ButtonItem,
   ButtonOptions,
- //  Item,
   Label,
   SimpleItem,
 } from "devextreme-react/form";
@@ -24,44 +21,30 @@ import {
   // CustomRule,
 } from "devextreme-react/form";
 import { API_HOST } from "./../constants";
-
-import notify from "devextreme/ui/notify";
 import { LoadPanel } from "devextreme-react/load-panel";
-import { convertToText } from "../utils/filtfunc";
+import { convertToText, showError, showSuccess } from "../utils/filtfunc";
 
 var _ = require("lodash");
 
 export const Partner = (props) => {
   const history = useHistory();
-//  let { id } = useParams();
 
   const handleOpenDataBot = async (e) => {
-
-    const dat = await asyncRule({value:partner.edrpou});
-
+    const dat = await asyncRule({ value: partner.edrpou });
     if (!dat) {
-      notify({ message: "Неправильний код ЄДРПОУ", position: "center center" },
-        "error",
-        3000
-      )
-      return
+      showError("Неправильний код ЄДРПОУ");
+      return;
     }
-    const d = await partnerDataSource.byEdrpou(''+partner.edrpou)
+    const d = await partnerDataSource.byEdrpou("" + partner.edrpou);
     if (d) {
-        setPartner(d);
-        notify({ message: "Знайдено у базі", position: "center center" },
-        "success",
-        3000
-      )
-        return 0
+      setPartner(d);
+      showSuccess("Знайдено у базі");
+      return 0;
     }
-
-    notify({ message: "Пошук в OpenDataBot", position: "center center" },
-    "warning",
-    3000
-  )
+    showSuccess("Пошук в OpenDataBot");
 
     setloadPanelVisible(true);
+
     const findVal = (obj, key) => {
       var seen = new Set(),
         active = [obj];
@@ -86,10 +69,6 @@ export const Partner = (props) => {
       return null;
     };
 
-    //     const tJSON = JSON.parse(tstJSON.replace(/\\/g,'\\'))
-    //     console.log(findVal(tJSON, 'pdv'))
-    //    return ;
-
     fetch(API_HOST, {
       method: "POST",
       credentials: "include",
@@ -99,15 +78,10 @@ export const Partner = (props) => {
       headers: {
         "Content-Type": "application/json",
       },
-      //              mode:"no-cors" ,
     })
-      .then((response) => {
-        console.log(response);
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((data) => {
         setloadPanelVisible(false);
-
         if (data.data.opendatabot && data.data.opendatabot.full_name) {
           const botPartner = data.data.opendatabot;
           const inn = findVal(botPartner, "pdv");
@@ -121,14 +95,10 @@ export const Partner = (props) => {
             inn: inn ? inn[0].number : "",
             note: !prevState.note ? JSON.stringify(botPartner) : prevState.note,
           }));
-          return
+          return;
         } else {
-          notify(
-            { message: "Не знайдено!!!", position: "center center" },
-            "error",
-            2000
-          );
-          setPartner({edrpou:partner.edrpou});
+          showError("Не знайдено!!!");
+          setPartner({ edrpou: partner.edrpou });
         }
       });
   };
@@ -148,7 +118,6 @@ export const Partner = (props) => {
     if (props._id && typeof props._id === "object" && props._id !== null) {
       setPartner(props._id);
     } else if (props._id) setP(props._id.ref);
-    return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props._id]);
 
@@ -169,15 +138,9 @@ export const Partner = (props) => {
 
   const position = { of: "#form" };
 
-  const showError = (message) => {
-    notify({ message: message, position: { at: "center" } }, "error", 5000);
-  };
-
   const asyncRule = (value) => {
     return new Promise((resolve) => {
-      resolve(
-        value.value.length === 8 || value.value.length === 10
-      );
+      resolve([8, 10].includes(value.value.length));
     });
   };
 
@@ -203,43 +166,27 @@ export const Partner = (props) => {
                 doctosave._id = "cat.partners|" + ref;
                 doctosave.class_name = "cat.partners";
               }
-              
               if (doctosave.ref) delete doctosave.ref;
-
               const q = JSON.stringify({
-                query: `mutation{setPartner(input:${convertToText(doctosave)}) {
-                    _id
-                      }}`,
+                query: `mutation{setPartner(input:${convertToText(
+                  doctosave
+                )}){_id}}`,
               });
-
               const response = await fetch(API_HOST, {
                 method: "POST",
                 credentials: "include",
                 body: q,
-                headers: {
-                  "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
               });
-              //console.log(response);
               const datar = await response.json();
-              //console.log(datar);
-              if (datar.errors) {
+              if (datar.errors)
                 datar.errors.forEach((err) => {
                   showError("Помилка запису: " + err.message);
                 });
-              } else {
-                // history.goBack();
-                notify(
-                  { message: "Записано", position: { at: "center" } },
-                  "success",
-                  5000
-                );
-              }
+              else showSuccess("Записано");
               break;
             }
             case "close": {
-              // {ddbox.current.instance.close()}
-              // console.log(e);
               history.goBack();
               break;
             }
@@ -256,17 +203,6 @@ export const Partner = (props) => {
             text: "Закрити",
             id: "close",
           },
-          // {
-          //   text: "Інше",
-          //   items: [
-          //     {
-          //       text: " інше 1",
-          //     },
-          //     {
-          //       text: "штше 2",
-          //     },
-          //   ],
-          // },
         ]}></Menu>
       <Form
         id="form"
@@ -274,8 +210,6 @@ export const Partner = (props) => {
         //readOnly={readOnly}
         showColonAfterLabel={true}
         labelLocation={"left"}
-        //            minColWidth={300}
-        //            colCount={4}
         width={1000}>
         <GroupItem colCount={4}>
           <SimpleItem dataField="id" editorOptions={{ disabled: false }}>
@@ -287,7 +221,6 @@ export const Partner = (props) => {
               editorType="dxTextBox"
               activeStateEnabled={true}
               editorOptions={{ disabled: false }}>
-              
               <Label text="Код ЄДРПОУ" />
               <AsyncRule
                 message="Неправильний код"

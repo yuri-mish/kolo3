@@ -2,7 +2,7 @@ import CustomStore from "devextreme/data/custom_store";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { DropDownBox } from "devextreme-react/drop-down-box";
-import { catLoad } from './../../utils/filtfunc';
+import { catLoad, handleErrors } from './../../utils/filtfunc';
 import { DataGrid,  Menu, Popup } from "devextreme-react";
 import { Partner } from './../../pages/partner';
 import { Column, FilterRow, Paging, Scrolling, Selection, StateStoring } from "devextreme-react/data-grid";
@@ -14,13 +14,9 @@ const cls_fields = 'ref name edrpou id parent is_buyer is_supplier legal_address
 
 export const partnerDataSource = new CustomStore({
   key: "ref",
-
-
   byKey: (ref) => {
     if (!ref) return { ref: ref, name: "" };
-    console.log("=2:", ref);
     const q = `{${cls_name} (ref:"${ref}" ) {${cls_fields} } }`;
-
     return (
       fetch(API_HOST, {
         method: "POST",
@@ -31,56 +27,27 @@ export const partnerDataSource = new CustomStore({
           "Accept": "application/json"
         },
       })
-        //        .then(handleErrors)
-        .then((response) => response.json())
-        .then((response) => {
-          const res =
-            response.data[cls_name].length === 0
-              ? { ref: ref, name: "" }
-              : response.data[cls_name][0];
-          console.log("=res:", res);
-          return res;
-        })
-    );
+        .then(handleErrors)
+        .then(response => (response.json()))
+        .then(response => {
+            return response.data[cls_name].length === 0?{ref:ref, name:'' }:response.data[cls_name][0]
+          })
+    )
   },
-
-  load: (options) => {
-    return catLoad(options,cls_name,cls_fields);
-    
-  },
-  insert: (val) => {
-    console.log("4:");
-    return new Promise((resolve, reject) => {
-      resolve([{ text: "Test insert" }]);
-    });
-  },
-  remove: (key) => {
-    console.log("5:");
-    return new Promise((resolve, reject) => {
-      resolve();
-    });
-  },
-  update: (dat, values) => {
-    console.log("6:");
-    return new Promise((resolve, reject) => {
-      resolve([{ text: "Test insert" }]);
-    });
+ load: (options) => { 
+   return catLoad(options,cls_name,cls_fields)
   },
 });
 
-partnerDataSource.byEdrpou = async (edrpou)=>{
+partnerDataSource.byEdrpou = async edrpou=>{
     const options={filter:["edrpou","=",edrpou]}
     const res = await catLoad(options,cls_name,cls_fields);
-    if (res.data &&res.data.length>0)
-      return res.data[0]
-    else return undefined  
+     return res.data&&res.data.length>0?res.data[0]:undefined  
 }
 
-export const PartnerBox = (props)=>{
+export const PartnerBox = props=>{
   const [dialogOpen, setDialogOpen] = useState(false);
-//  const [id, setId] = useState();
   const currentRowData = useRef();
-//  console.log('currentRowData',currentRowData.current,'\nid:',id,'value',props.value)
   const ddbox = useRef()  
   const dgrid = useRef()
 
@@ -90,37 +57,30 @@ export const PartnerBox = (props)=>{
     currentRowData.current = newObj
  }
   useEffect( () => {
-    
     if (!currentRowData.current) currentRowData.current = {ref:props.value}
     currentRowData_byKeyAsync(props.value)
-    
-  //  setId(prev => props.value)
-    return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.value]);
 
   const viewButton = {
   icon: 'search',
-  type: 'normal',//'default',
+  type: 'normal',
   onClick: async () => {
-   // setId(id)
-    if (!currentRowData.current) {currentRowData.current = await partnerDataSource.byKey(props.value)}
-   
+    if (!currentRowData.current) currentRowData.current = await partnerDataSource.byKey(props.value)
     setDialogOpen(true)
     ddbox.current.instance.open()
   }
 };
 
-  const selectHandler = (rowData)=>{
+  const selectHandler = useCallback( rowData=>{
     if (props.onChange) props.onChange(rowData)
     ddbox.current.instance.close()
-  }
+  },
+  [props])
 
   const clickMenu = useCallback(
-    (e) => {
-        if (e.itemData.id === 'open') {
-          setDialogOpen(true)
-          }
+    e=>{
+        if (e.itemData.id === 'open') setDialogOpen(true)
         if (e.itemData.id === 'select'){
           selectHandler(currentRowData.current)
           }
@@ -133,7 +93,7 @@ export const PartnerBox = (props)=>{
         {ddbox.current.instance.close()}  
         console.log(e);
       },
-    [],
+    [selectHandler],
   )
 
   return (
@@ -205,7 +165,7 @@ export const PartnerBox = (props)=>{
       onFocusedRowChanged={(e)=>{
                 if (e.row) currentRowData.current = e.row.data
                 else currentRowData.current = {name:'',ref:''}
-     //   console.log(e)
+//        console.log(e)
       }}
       hoverStateEnabled={true}
  //     focusedRowEnabled = {true}

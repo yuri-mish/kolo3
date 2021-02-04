@@ -5,15 +5,7 @@ import { TextBox, DateBox, Menu } from "devextreme-react";
 import Toolbar, { Item } from "devextreme-react/toolbar";
 import { locale } from "devextreme/localization";
 import moment from "moment";
-//import {lodash as _ } from "lodash"
-//import Lookup from "devextreme-react/lookup";
-//import { RemoteOperations } from "devextreme-react/data-grid";
-//import { DropDownBox } from "devextreme-react/drop-down-box";
 import DataGrid, {
- // Selection,
- // Paging,
- // FilterRow,
- // Scrolling,
   Column,
   Editing,
   Texts,
@@ -44,9 +36,7 @@ export const Order = (props) => {
     number_doc: "",
     class_name: "doc.buyers_order",
     partner: { ref: "", name: "" },
-    services: [
-      { nom: { row: 1, ref: "", name: "" }, price: 0 },
-    ],
+    services: [{ nom: { row: 1, ref: "", name: "" }, price: 0 }],
     doc_amount: 0,
     vat_included: true,
     doc_currency: "",
@@ -90,24 +80,25 @@ export const Order = (props) => {
       },
     })
       .then((response) => {
-        console.log(response);
+        //       console.log(response);
         return response.json();
       })
-      .then(async (data) => {
+      .then(data => {
         if (data.data.buyers_orders && data.data.buyers_orders.length > 0) {
-          const locpr = await loadPrices(data.data.buyers_orders[0].date);
-          data.data.buyers_orders[0].services.forEach((r) => {
-            r.price =
-              locpr.find((p) => {
-                return p.nom === r.nom.ref;
-              })?.price || 0;
-            const calcPrice = Math.round(r.amount / r.quantity, -2);
-            r.nats = 0;
-            r.spec = 0;
-            if (calcPrice > r.price) r.nats = calcPrice - r.price;
-            if (calcPrice < r.price && r.discount_percent_automatic === 0)
-              r.spec = calcPrice;
-          });
+          loadPrices(data.data.buyers_orders[0].date)
+            .then((prices) => {
+              data.data.buyers_orders[0].services.forEach((r) => {
+                r.price = prices.find((p) => p.nom === r.nom.ref)?.price || 0;
+                const calcPrice = Math.round(r.amount / r.quantity, -2);
+                r.nats = r.spec = 0;
+                if (calcPrice > r.price) r.nats = calcPrice - r.price;
+                if (calcPrice < r.price && r.discount_percent_automatic === 0)
+                  r.spec = calcPrice;
+              });
+            })
+            .catch(() => {
+              showError("Помилка заванатаження цін");
+            });
           setData(data.data.buyers_orders[0]);
         } else {
           loadPrices();
@@ -115,10 +106,10 @@ export const Order = (props) => {
       });
   };
 
-  const loadPrices = async (date) => {
+  const loadPrices = async date => {
     if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss");
     const datePatam = `(date:"${date}")`;
-    return fetch(API_HOST, {
+    const response = await fetch(API_HOST, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
@@ -127,26 +118,22 @@ export const Order = (props) => {
       headers: {
         "Content-Type": "application/json",
       },
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        console.log("=prices response:", data);
-        var pr = [];
-        if (data.data.prices && data.data.prices.length > 0) {
-          pr = data.data.prices;
-          const vat_included = pr[0].vat_included === "true";
-          const doc_currency = pr[0].currency;
-          setData((prevState) => ({
-            ...prevState,
-            vat_included: vat_included,
-            doc_currency: doc_currency,
-          }));
-        }
-        setPrices(pr);
-        return pr;
-      });
+    });
+    const data = await response.json();
+    //        console.log("=prices response:", data);
+    var pr = [];
+    if (data.data.prices && data.data.prices.length > 0) {
+      pr = data.data.prices;
+      const vat_included = pr[0].vat_included === "true";
+      const doc_currency = pr[0].currency;
+      setData((prevState) => ({
+        ...prevState,
+        vat_included: vat_included,
+        doc_currency: doc_currency,
+      }));
+    }
+    setPrices(pr);
+    return pr;
   };
 
   useEffect(() => {
@@ -175,24 +162,20 @@ export const Order = (props) => {
     if (currentRowData.vat_rate === "НДС20")
       currentRowData.vat_amount = Math.round(currentRowData.amount / 6, -2);
     else currentRowData.vat_amount = 0;
-    data.services.forEach((r) => {
+    data.services.forEach(r => {
       doc_amount +=
         r.row === currentRowData.row ? currentRowData.amount : r.amount;
     });
     setData((prevState) => ({
       ...prevState,
       doc_amount: doc_amount,
-      services: prevState.services.map((row) => {
-        return row.row === currentRowData.row ? currentRowData : row;
-      }),
+      services: prevState.services.map(row => ( row.row === currentRowData.row?currentRowData:row)),
     }));
   };
   const onchangeNom = async (newData, value, currentRowData) => {
     //console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData)
-    var pricerow = prices.find((r) => {
-      return r.nom === value;
-    });
-    currentRowData.price = pricerow ? pricerow.price : 0;
+    //var pricerow = 
+    currentRowData.price = prices.find(r=>(r.nom === value)).price||0;//pricerow ? pricerow.price : 0;
     var res = await nomsDataSource.byKey(value);
     if (res) {
       currentRowData.content = res.name_full;
@@ -206,22 +189,27 @@ export const Order = (props) => {
     //console.log("price=", currentRowData.price);
   };
 
-  const onchangeDate = async (param) => {
+  const onchangeDate = param => {
     setData((prevState) => ({
       ...prevState,
       date: moment(param.value).format("YYYY-MM-DDTHH:mm:ss"),
     }));
-    const newprice = await loadPrices(
-      moment(param.value).format("YYYY-MM-DDTHH:mm:ss")
-    );
-    data.services.forEach((row) => {
-      var pricerow = newprice.find((priceRow) => {
-        return priceRow.nom === row.nom.ref;
+
+    loadPrices(moment(param.value).format("YYYY-MM-DDTHH:mm:ss"))
+      .then((prices) => {
+        data.services.forEach((row) => {
+          var pricerow = prices.find(
+            (priceRow) => priceRow.nom === row.nom.ref
+          );
+          row.price = pricerow ? pricerow.price : 0;
+          calcrRow(row);
+        });
+      })
+      .catch((e) => {
+        showError("Помилка завантаження прайсів");
       });
-      row.price = pricerow ? pricerow.price : 0;
-      calcrRow(row);
-    });
   };
+
   const addButtonOptions = {
     icon: "plus",
     onClick: () => {
@@ -238,21 +226,6 @@ export const Order = (props) => {
     },
   };
 
-  // const deleteButtonOptions = {
-  //   icon: "minus",
-  //   disabled: false,
-
-  //   onClick: () => {
-  //     var st = data.services.filter((row) => row.row !== rowData?.row);
-  //     deleteButtonOptions.disabled = st.length === 0;
-  //     //      console.log('delete row:',st)
-  //     setData((prevState) => ({
-  //       ...prevState,
-  //       services: st,
-  //     }));
-  //   },
-  // };
-
   const showError = (message) => {
     notify({ message: message, position: { at: "center" } }, "error", 5000);
   };
@@ -264,12 +237,11 @@ export const Order = (props) => {
         searchField="name"
         keyField="ref"
         dataSource={nomsDataSource}
-        dataSourceUserOptions = {{selectServices : true}}
-        columns = {[
-              { dataField: "name", width: "80", caption: "Назва" },
-              { dataField: "name_full", caption: "Повна назва" },
-            ]
-          }
+        dataSourceUserOptions={{ selectServices: true }}
+        columns={[
+          { dataField: "name", width: "80", caption: "Назва" },
+          { dataField: "name_full", caption: "Повна назва" },
+        ]}
         onChange={(e) => {
           if (e) {
             const services = data.services.slice();
@@ -285,77 +257,6 @@ export const Order = (props) => {
       />
     );
   };
-
-  // const cellTemplate = (r)=>{
-  //   return (
-
-  //   <DropDownBox
-  //   //width="200px"
-  //   value={r.data.value}
-  //   valueExpr="ref"
-  //   deferRendering={false}
-  //   displayExpr="name"
-  //   placeholder='...вкажіть послугу ...'
-  //   showClearButton={false}
-  //   dataSource={nomsDataSource}
-  //   dropDownOptions={{width:"800px"}}
-
-  // >
-
-  //   <Menu
-  //     onItemClick={(e) => {
-  //       console.log('menu item:',e);
-  //     }}
-  //     dataSource={[
-  //       {
-  //         text: "Вибрати",
-  //       },
-  //       // {
-  //       //   text: "Додати",
-  //       // },
-  //       {
-  //         text: "Закрити",
-  //       },
-
-  //       {
-  //         text: "Інше",
-  //         items: [
-  //           {
-  //             text: " інше 1",
-  //           },
-  //           {
-  //             text: "штше 2",
-  //           },
-  //         ],
-  //       },
-  //     ]}></Menu>
-
-  //   <DataGrid
-  //     remoteOperations={true}
-  //     dataSource={nomsDataSource}
-  //     hoverStateEnabled={true}
-  //      onSelectionChanged={(e) => {
-  //       if (!r.data.data.nom)  r.data.data.nom={ref:'',nom:''}
-  //       r.data.setValue(e.selectedRowsData[0].ref,e.selectedRowsData[0].name)
-  //   //  console.log('===onSelectionChanged:',e);
-  //     }}
-
-  //     height="90%">
-
-  //     <Selection mode="single" />
-  //     <Scrolling mode="virtual" rowRenderingMode="virtual" />
-  //     <Paging enabled={true} pageSize={200} />
-  //     <FilterRow visible={true} {...uaFilterRowText}/>
-  //     <Column dataField="ref" visible={false} />
-  //     <Column dataField="name" caption="Назва" width="150px"/>
-  //     <Column dataField="name_full" caption="Повна назва"/>
-
-  //   </DataGrid>
-
-  // </DropDownBox>
-
-  //   )
-  // }
 
   const changeReq = (e) => {
     setData((prevState) => ({
@@ -392,7 +293,7 @@ export const Order = (props) => {
 
   return (
     <div>
-      <Menu 
+      <Menu
         onItemClick={async (e) => {
           switch (e.itemData.id) {
             case "ok": {
@@ -462,72 +363,80 @@ export const Order = (props) => {
         }}
         dataSource={[
           {
-            id: 'ok',
-            text: 'Закрити і зберегти',
-            icon: 'save',
+            id: "ok",
+            text: "Закрити і зберегти",
+            icon: "save",
           },
-          { id: 'close', text: 'Закрити', icon: 'close' },
+          { id: "close", text: "Закрити", icon: "close" },
           {
-            text: 'Зберегти',
+            text: "Зберегти",
             disabled: true,
           },
           {
-            text: 'Друк',
-            icon: 'print',
+            text: "Друк",
+            icon: "print",
             items: [
               {
-                id: 'print',
-                text: 'Рахунок',
+                id: "print",
+                text: "Рахунок",
                 url: API_HOST + `/printform/${id}/inv`,
                 disabled: !data.number_doc,
               },
               {
-                id: 'print',
-                text: 'Договір',
+                id: "print",
+                text: "Договір",
                 url: API_HOST + `/printform/${id}/dog`,
                 disabled: !data.number_doc,
               },
               {
-                id: 'print',
-                text: 'Договір сертифікації',
+                id: "print",
+                text: "Договір сертифікації",
                 url: API_HOST + `/printform/${id}/dogs`,
                 disabled: false, //!data.number_doc,
               },
               {
-                id: 'print',
-                text: 'Договір для Казначейства',
+                id: "print",
+                text: "Договір для Казначейства",
                 url: API_HOST + `/printform/${id}/dogk`,
                 disabled: !data.number_doc,
               },
             ],
           },
-   
         ]}></Menu>
       <div style={{ display: "flex" }}>
         <div style={{ display: "flex", paddingRight: "1rem" }}>
-          <TextBox disabled={true} value="Номер"></TextBox>
+          <div style={{ width: "150px" }} class="dx-field-label">
+            Номер
+          </div>
           <TextBox
             readOnly={true}
             value={data.number_doc}
             placeholder="...номер документа..."
             hint="номер документу присвоєний головним офісом"
+            width={250}
+          />
+          <div style={{ width: "150px" }} class="dx-field-label">
+            Дата
+          </div>
+          <DateBox
+            id="date"
+            type="datetime"
+            value={data.date}
+            displayFormat={"dd-MM-yyyy HH:mm:ss"}
+            useMaskBehavior={true}
+            onValueChanged={onchangeDate}
+            hint="дата документу"
+            width={350}
+            //                disabledDates={this.getDisabledDates}
           />
         </div>
-        <TextBox value="Дата"></TextBox>
-        <DateBox
-          id="date"
-          type="datetime"
-          value={data.date}
-          displayFormat={"dd-MM-yyyy HH:mm:ss"}
-          useMaskBehavior={true}
-          onValueChanged={onchangeDate}
-          hint="дата документу"
-          //                disabledDates={this.getDisabledDates}
-        />
       </div>
 
       <div style={{ display: "flex", paddingTop: "1rem" }}>
-        <TextBox value="Контрагент"></TextBox>
+        <div style={{ width: "150px" }} class="dx-field-label">
+          Контрагент
+        </div>
+
         <PartnerBox
           value={data.partner?.ref}
           onChange={(e) => {
@@ -542,7 +451,9 @@ export const Order = (props) => {
         />
       </div>
       <div style={{ display: "flex" }}>
-        <TextBox value="Особа"></TextBox>
+        <div style={{ width: "150px" }} class="dx-field-label">
+          Особа
+        </div>
         <TextBox
           width="80%"
           id="ClientPerson"
@@ -551,11 +462,13 @@ export const Order = (props) => {
           onChange={changeReq}
         />
         <div style={{ display: "flex", paddingRight: "1rem" }}>
-          <TextBox value="Телефон"></TextBox>
+          <div style={{ width: "150px" }} class="dx-field-label">
+            Телефон
+          </div>
           <TextBox
             id="ClientPersonPhone"
             value={data.ClientPersonPhone}
-            placeholder="... номер телефон"
+            placeholder="... номер телефону ..."
             onChange={changeReq}
           />
         </div>
@@ -577,19 +490,17 @@ export const Order = (props) => {
           remoteOperations={false}
           rowAlternationEnabled={true}
           showBorders={true}
+          showColumnLines={true}
           allowColumnResizing={true}
           columnResizingMode="widget"
-          dataSource={data.services} 
+          dataSource={data.services}
           hoverStateEnabled={true}
           //activeStateEnabled = {true}
           //selectedRowKeys={this.state.gridBoxValue}
-          onValueChanged={(e) => {
-            console.log("=999=", e);
-          }}
           selectTextOnEditStart={true}
           onInitNewRow={(e) => {
             var st = data.services.slice();
-            console.log("New row:", st);
+            //console.log("New row:", st);
             st.push({
               row: data.services.length + 1,
               nom: { ref: undefined, name: "" },
@@ -701,10 +612,18 @@ export const Order = (props) => {
           <Column dataField="vin_code" caption="VIN код" allowEditing={true} />
         </DataGrid>
       </div>
-      <div style={{ display: "flex", paddingRight: "1rem", width: "800" }}>
-        <TextBox width="20%" value="Коментар"></TextBox>
+      <div
+        style={{
+          display: "flex",
+          paddingTop: "1rem",
+          paddingRight: "1rem",
+          width: "800",
+        }}>
+        <div style={{ width: "150px" }} class="dx-field-label">
+          Коментар
+        </div>
         <TextBox
-          width="80%"
+          width="100%"
           id="note"
           value={data.note}
           placeholder="коментар"

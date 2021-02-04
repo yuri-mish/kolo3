@@ -1609,12 +1609,13 @@
   width: 60%;
 }
 .dx-field-label {
-  color: rgba(117,117,117,.87);
-  font-size: 12px;
+  color: rgba(59, 59, 59, 0.87);
+  font-size: 14px;
   cursor: default;
   -webkit-align-self: center;
   -ms-flex-item-align: center;
   align-self: center;
+  padding-left: 15px;
   padding-right: 15px;
 }
 .dx-field-value.dx-widget,

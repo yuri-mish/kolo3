@@ -21,54 +21,43 @@ import { Menu } from "devextreme-react";
 // import { Popup } from 'devextreme-react';
 import { useHistory } from "react-router-dom";
 
-import {convertToText,filterObj} from '../../utils/filtfunc'
-import { API_HOST, resetOperationText, txtOperationDescriptions, uaFilterRow, uaFilterRowText } from './../../constants';
-import { PartnerBox, partnerDataSource } from "../../db/ds/dsPartners";
+import {convertToText,filterObj, handleErrors} from '../../utils/filtfunc'
+import { API_HOST, uaFilterRowText } from './../../constants';
+import { partnerDataSource } from "../../db/ds/dsPartners";
 
 import { useSubscription, gql} from "@apollo/client";
-//import Cookies  from 'universal-cookie';
-//import { useCookies } from 'react-cookie';
-//import { locale } from 'devextreme/localization';
+import { notify } from 'devextreme/ui/notify';
 
 
-const handleErrors = (response) => {
-  if (!response.ok) {
-    throw Error(response.statusText);
-  }
-  return response;
+
+
+
+
+const showError = (message) => {
+  notify({ message: message, position: { at: "center" } }, "error", 5000);
 };
-
-
-
-
 
 const customDataSource = new CustomStore({
   key: "_id",
-
   update: (dat) => {
     console.log(dat);
   },
   load: (options) => {
  //   console.log("=Options:" + JSON.stringify(options));
-    
-    const _jsonFilter = options.filter?" jfilt:"+convertToText(filterObj(options.filter)):''
+    const _jsonFilter = options.filter?' jfilt:'+convertToText(filterObj(options.filter)):''
 //    console.log('_jsonFilter:',_jsonFilter)
-
-
-    
-    let _sort = "";
+    let _sort = '';
     if (options.sort) {
       const __sort = options.sort[0] 
       _sort = ` sort:{selector:"${__sort.selector}" desc:"${__sort.desc}"}`;
     } 
- 
      let _search = ''
     // let _search =
     //   options.searchOperation && options.searchValue
     //     ? ', nameContaine:"' + options.searchValue + '"'
     //     : "";
 
-    var _offset = "";
+    var _offset = '';
     if (options.skip) _offset = ` offset:${options.skip}`;
 
     var _limit = 50;
@@ -76,9 +65,9 @@ const customDataSource = new CustomStore({
 
     var _qT = ``;
     if (options.requireTotalCount)
-      _qT = `totalcount:buyers_orders (limit:1 ${_search} ${_jsonFilter} totalCount:1)  { totalcount} `;
+      _qT = `totalcount:buyers_orders (limit:1${_search}${_jsonFilter} totalCount:1)  { totalcount} `;
 
-    var q = `{${_qT} buyers_orders(limit:${_limit} ${_search} ${_sort}  ${_offset} ${_jsonFilter})
+    var q = `{${_qT} buyers_orders(limit:${_limit}${_search}${_sort}${_offset}${_jsonFilter})
                     { 
                      _id
                      number_doc
@@ -97,7 +86,6 @@ const customDataSource = new CustomStore({
    return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
-     // credentials: 'same-origin', mode:"no-cors",
       body: JSON.stringify({
         query: q,
       }),
@@ -105,150 +93,42 @@ const customDataSource = new CustomStore({
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
- //                   mode:"no-cors" ,
-    })
+     })
       .then(handleErrors)
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        //               console.log(data.data)
-        if (data.errors) {
-          return { errors: data.errors[0] };
-        }
-
+      .then(response => (response.json()))
+      .then(data => {
+        if (data.errors) return { errors: data.errors[0] };
         return {
           data: data.data.buyers_orders,
           totalCount: options.requireTotalCount
               ? data.data.totalcount[0].totalcount
-              : undefined,
-          //summary: response.summary,
-          //groupCount: response.groupCount
-        };
-        // return ()
-      });
-    //.catch(() => { console.log( 'Network error' )});
+              : undefined
+        }
+      }).catch(() => { showError('Помилка отримання списку документів')})
   },
-  // insert: (data) => {
-  //   createObject({
-  //     variables: { product: { ...data, oid: uuidv4() } },
-  //   }).then((xx) => refetch());
-  // },
-  // update: (key, values) => {
-  //   updateObject({
-  //     variables: {
-  //       product: { ...values },
-  //       oid: key,
-  //     },
-  //   });
-  // },
-  // remove: (key) => {
-  //   deleteObject({
-  //     variables: {
-  //       oid: key,
-  //     },
-  //   }).then((xx) => refetch());
-  // },
-});
-
-const lookupDataSource = new CustomStore({
-  key: "ref",
-  byKey: function (key) {
-    //    console.log("2:",this.);
-    var res = this.load({ lookUp: key });
-    return res.then((dat) => {
-      var ob = dat.data?.find((elem) => elem.ref === key);
-      return ob;
-    });
-  },
-  paginate: true,
-  pageSize: 10,
-  //        onModifying:(dat)=>{console.log("2:",dat)},
-  load: async (options) => {
-    console.log(options);
-    if (options.filter) return { data: [] };
-    let search = "";
-    if (options.searchOperation && options.searchValue)
-      search = ', nameContaine:"' + options.searchValue + '"';
-
-    let lookUp = "";
-    if (options.lookUp) lookUp = ', lookup:"' + options.lookUp + '"';
-
-    //       console.log(options)
-    const q = `{partners (limit:50 ${lookUp} ${search})
-                    { 
-                     ref 
-                     name
-                    } 
-                 }`;
-
-    //       console.log(q)
-    return fetch(API_HOST, {
-      method: "POST",
-      body: JSON.stringify({ query: q }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then(handleErrors)
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        //                console.log(data.data.partners)
-
-        return {
-          data: data.data.partners,
-          //                   totalCount: data.data.partners.length,
-        };
-      });
-  },
-});
-
-
-
+  });
 
 const Orders = () => {
   const refGrid = useRef()
-  const { user, signOut } = useAuth();
-    //    const [errorLoading, setDialogOpen] = useState(false);
+  const { user, signOut } = useAuth(); 
   const history = useHistory();
   const [currRow,setCurrRow] = useState({ref:''})
 
   const sq = gql(`subscription{docChange(input:{username:"${user?user.email:''}"})}`)
   const  {data: docChange,loading: loading_docChange} = useSubscription(sq);
-    //console.log('=data=:',docChange,' =loading=:',loading_docChange)
   
     useEffect(() => {
-    console.log('=data=:',docChange,' =loading=:',loading_docChange)
       refGrid.current.instance.refresh(true)
-       return () => {
-      // cleanup
-     }
-   }, [docChange,loading_docChange]) 
+     }, [docChange,loading_docChange]) 
 
-
-useEffect(() => {
-  //etCurrRow()
-  
-  return () => {
-    
-  };
-}, [])
-
-  customDataSource.on("loaded", function (result) {
-    if (result.errors) {
-      console.log("loaded Some error:", result.errors);
-      signOut();
-    }
+  customDataSource.on("loaded", result=>{
+    if (result.errors) signOut();
   });
 
   const setRow=(e)=>{
     var r
     if (e.row) r=e.row.data
-
     if (e.data) r=e.data
-    
     if (r){
       r.ref = r._id.split('|')[1]
       setCurrRow(r)
@@ -258,38 +138,13 @@ useEffect(() => {
   // const classes = useStyles();
 
   const editIconClick = (e) => {
-    console.log("Edit:", e);
     history.push("/order/" + e.row.key.split("|")[1]);
   };
 
-  //     const sayHelloWorld = ()=> {
-  //         //setDialogOpen(!dialogOpen)
-  //         history.push('/order/72eae9aa-e11c-11ea-811a-00155da29310');
-  // //        alert('Hello world!')
-  //     }
-  //customDataSource.on('')
   return (
-    <div height="5rem">
-      {/* <Popup
-          visible={dialogOpen}
-          onHiding={()=>{setDialogOpen(!dialogOpen)}}
-          dragEnabled={false}
-          closeOnOutsideClick={true}
-          showTitle={true}
-          title="Замовлення"
-          //width={600}
-          width="80%"
-          //height={250}
-        >
-                <Order/>
-                </Popup>
-          <Button
-                text="Click me"
-                onClick={sayHelloWorld}
-            /> */}
+    <div height="6rem">
     <Menu
-    onItemClick={(e) => {
-      console.log('menu item:',e);
+    onItemClick={e => {
       switch(e.itemData.id){
       case "new": { history.push("/order/new");
                     break
@@ -377,65 +232,42 @@ useEffect(() => {
             <Scrolling mode="virtual" rowRenderingMode="virtual"  />
             <Paging  pageSize={100} />
             <FilterRow visible={true} {...uaFilterRowText}/>
-        {/* <Editing
-            mode="batch" 
-            allowUpdating={true}
-            selectTextOnEditStart={true}
-  //          startEditAction={this.state.startEditAction} 
-
-            /> */}
+        
         <Column type="buttons" width={35}>
           <CButton name="_edit" icon="edit" onClick={editIconClick} />
         </Column>
 
         <Column width={145}
           dataField="number_doc"
-       
           caption="Номер"
           dataType="string"
-          //format="currency"
-          alignment="left"
-          //          allowEditing={true}
+          alignment="center"
         />
-        <Column width={130}
+        <Column width={170}
           dataField="date"
           caption="Дата"
           dataType="date"
-          format="dd/MM/yyyy HH:mm:ss"
-          alignment="left"
+          format="dd.MM.yyyy HH:mm:ss"
+          alignment="center"
         />
         <Column width={400}
         allowSorting={false}
           dataField="partner.ref"
           caption="Контрагент"
           dataType="string"
-          //format="currency"
           alignment="left"
-          
-          onEditorPreparing  = {(e)=>{
-          console.log(e)
-        }}
-
-          calculateDisplayValue={(data) => {
-            //                console.log(data) ;
-            return data.partner?.name;
-          }}>
-  
+          calculateDisplayValue={data => (data.partner?.name)}>
           <Lookup 
-//            dataSource={lookupDataSource}
             dataSource={partnerDataSource} allowClearing={true} 
-
             valueExpr="ref"
             displayExpr="name"
             minSearchLength={3}
-      
             searchTimeout={500}>
-         
             </Lookup>
         </Column>
 
         <Column width={100}
-          allowSorting={false}
+          allowSorting={true}
           dataField="doc_amount"
           caption="Сума"
           dataType="number"
@@ -447,7 +279,6 @@ useEffect(() => {
           dataField="shipped"
           caption="Відвантажено"
           dataType="number"
-          //format="currency"
           alignment="right"
         />
         <Column width={100}
@@ -455,7 +286,6 @@ useEffect(() => {
           dataField="paid"
           caption="Сплачено"
           dataType="number"
-          //format="currency"
           alignment="right"
         />
         <Column 
@@ -463,7 +293,6 @@ useEffect(() => {
           dataField="note"
           caption="Коментар"
           dataType="number"
-          //format="currency"
           alignment="left"
         />
       </DataGrid>
