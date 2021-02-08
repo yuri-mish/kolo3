@@ -103,12 +103,8 @@ export const Partner = (props) => {
       });
   };
 
-  const setP = async (id) => {
-    const partn = await partnerDataSource.byKey(id).then((data) => {
-      setPartner(data);
-      return data;
-    });
-    return partn;
+  const setP =  (id) => {
+    partnerDataSource.byKey(id).then(data => {setPartner(data)})
   };
 
   const [partner, setPartner] = useState();
@@ -117,8 +113,9 @@ export const Partner = (props) => {
   useEffect(() => {
     if (props._id && typeof props._id === "object" && props._id !== null) {
       setPartner(props._id);
-    } else if (props._id) setP(props._id.ref);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } else if (props._id){
+         setP(props._id);
+    }
   }, [props._id]);
 
   const noteRender = (data) => {
@@ -172,16 +169,17 @@ export const Partner = (props) => {
                   doctosave
                 )}){_id}}`,
               });
-              const response = await fetch(API_HOST, {
+              const datar = await fetch(API_HOST, {
                 method: "POST",
                 credentials: "include",
                 body: q,
                 headers: { "Content-Type": "application/json" },
-              });
-              const datar = await response.json();
+              }).then(resp=>(resp.json())) ;
               if (datar.errors)
                 datar.errors.forEach((err) => {
-                  showError("Помилка запису: " + err.message);
+                  let message = '<невідомо>'
+                  if  (err&&err.message)  message = err.message
+                  showError("Помилка запису: " + message);
                 });
               else showSuccess("Записано");
               break;

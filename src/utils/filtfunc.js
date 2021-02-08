@@ -53,13 +53,13 @@ export const convertToText = obj => {
   return string.join(",");
 };
 
-export const catLoad = async (options, cls_name, cls_fields) => {
+export const catLoad =  async (options, cls_name, cls_fields) => {
   
   var filt = options.filter;
   if (options.searchExpr && options.searchValue !== null) {
     filt = [options.searchExpr, options.searchOperation, options.searchValue];
   }
-  const _jsonFilter = filt?' jfilt:' + convertToText(filterObj(filt)):'';
+    const _jsonFilter = filt?' jfilt:' + convertToText(filterObj(filt)):'';
 
   var _offset = '';
   if (options.skip) _offset = ` offset:${options.skip}`;
@@ -78,35 +78,20 @@ export const catLoad = async (options, cls_name, cls_fields) => {
   const q = `{${_qT} ${cls_name}(limit:${_limit} ${_jsonFilter}${_offset}${_userOptions}){${cls_fields}}}`;
 
   console.log(q);
-  // const response = await fetch(API_HOST, {
-  //   method: "POST",
-  //   credentials: "include",
-  //   body: JSON.stringify({ query: q }),
-  //   headers: { "Content-Type": "application/json" },
-  // });
-  // const response_1 = await handleErrors(response);
-  // const response_2 = await response_1.json();
-  // return ({
-  //   data: response_2.data[cls_name],
-  //   totalCount: options.requireTotalCount
-  //     ? response_2.data.totalcount[0].totalcount
-  //     : undefined,
-  // });
+
   return fetch(API_HOST, {
     method: "POST",
     credentials: "include",
     body: JSON.stringify({ query: q }),
     headers: { "Content-Type": "application/json" },
-  })
-  .then(response=> handleErrors(response) )
-  .then(response=> (response.json()))
-  .then(response=> ( 
-    {
-      data: response.data[cls_name],
+  }).then(handleErrors).then(resp=>(resp.json()))
+  .then(resp=>({
+      data: resp.data[cls_name],
       totalCount: options.requireTotalCount
-      ? response.data.totalcount[0].totalcount
-      : undefined,
-    }))
+        ? resp.data.totalcount[0].totalcount
+        : undefined,
+  }))
+    
 };
 
 export const showError = (message) => {

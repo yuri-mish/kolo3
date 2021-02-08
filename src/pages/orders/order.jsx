@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import { TextBox, DateBox, Menu } from "devextreme-react";
@@ -24,14 +24,14 @@ import { AutocompleteOTK } from "../../components/otk/AutocompleteOTK";
 
 var _ = require("lodash");
 
-export const Order = (props) => {
+export const Order = () => {
   const history = useHistory();
 
   var rowData = {};
 
   let { id } = useParams();
 
-  const OrderSchema = {
+  const OrderSchema = useMemo(()=>({
     date: moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss"),
     number_doc: "",
     class_name: "doc.buyers_order",
@@ -40,14 +40,13 @@ export const Order = (props) => {
     doc_amount: 0,
     vat_included: true,
     doc_currency: "",
-  };
+  }),[]);
 
   const [data, setData] = useState(OrderSchema);
-
   const [prices, setPrices] = useState();
 
-  const load = () => {
-    return fetch(API_HOST, {
+const load = () => {
+     fetch(API_HOST, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
@@ -79,15 +78,12 @@ export const Order = (props) => {
         "Content-Type": "application/json",
       },
     })
-      .then((response) => {
-        //       console.log(response);
-        return response.json();
-      })
-      .then(data => {
-        if (data.data.buyers_orders && data.data.buyers_orders.length > 0) {
-          loadPrices(data.data.buyers_orders[0].date)
+      .then(response => (response.json()))
+      .then(response => {
+        if (response.data.buyers_orders && response.data.buyers_orders.length > 0) {
+          loadPrices(response.data.buyers_orders[0].date)
             .then((prices) => {
-              data.data.buyers_orders[0].services.forEach((r) => {
+              response.data.buyers_orders[0].services.forEach((r) => {
                 r.price = prices.find((p) => p.nom === r.nom.ref)?.price || 0;
                 const calcPrice = Math.round(r.amount / r.quantity, -2);
                 r.nats = r.spec = 0;
@@ -99,46 +95,47 @@ export const Order = (props) => {
             .catch(() => {
               showError("Помилка заванатаження цін");
             });
-          setData(data.data.buyers_orders[0]);
+          setData(response.data.buyers_orders[0]);
         } else {
           loadPrices();
         }
       });
   };
 
-  const loadPrices = async date => {
+  const loadPrices =  date => {
     if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss");
-    const datePatam = `(date:"${date}")`;
-    const response = await fetch(API_HOST, {
+    const dateParam = `(date:"${date}")`;
+     return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({
-        query: `{prices ${datePatam} { nom price currency vat_included }}`,
+        query: `{prices ${dateParam} { nom price currency vat_included }}`,
       }),
       headers: {
         "Content-Type": "application/json",
       },
-    });
-    const data = await response.json();
+    })
+    .then(resp=>(resp.json()))
+    .then(resp=>{
     //        console.log("=prices response:", data);
-    var pr = [];
-    if (data.data.prices && data.data.prices.length > 0) {
-      pr = data.data.prices;
-      const vat_included = pr[0].vat_included === "true";
-      const doc_currency = pr[0].currency;
+      var pr = [];
+      if (resp.data.prices && resp.data.prices.length > 0) {
+      pr = resp.data.prices;
       setData((prevState) => ({
         ...prevState,
-        vat_included: vat_included,
-        doc_currency: doc_currency,
+        vat_included: pr[0].vat_included === "true",
+        doc_currency: pr[0].currency,
       }));
     }
     setPrices(pr);
     return pr;
-  };
+  })};
 
   useEffect(() => {
-    load();
-    loadPrices();
+    if (id&&id!=="new")
+      load()
+    else   
+      loadPrices();
     nomsDataSource.userOptions.selectServices = true;
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -443,8 +440,8 @@ export const Order = (props) => {
             setData((prevState) => ({
               ...prevState,
               partner: {
-                ref: e.ref,
-                name: e.name,
+                ref: e.ref||'',
+                name: e.name||'',
               },
             }));
           }}
