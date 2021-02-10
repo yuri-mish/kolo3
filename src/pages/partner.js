@@ -24,10 +24,20 @@ import { API_HOST } from "./../constants";
 import { LoadPanel } from "devextreme-react/load-panel";
 import { convertToText, showError, showSuccess } from "../utils/filtfunc";
 
+
+
 var _ = require("lodash");
 
 export const Partner = (props) => {
   const history = useHistory();
+
+  
+  const setP =  (id) => {
+    partnerDataSource.byKey(id).then(data => {setPartner(data)})
+  };
+
+  const [partner, setPartner] = useState({});
+  const [loadPanelVisible, setloadPanelVisible] = useState(false);
 
   const handleOpenDataBot = async (e) => {
     const dat = await asyncRule({ value: partner.edrpou });
@@ -102,13 +112,6 @@ export const Partner = (props) => {
         }
       });
   };
-
-  const setP =  (id) => {
-    partnerDataSource.byKey(id).then(data => {setPartner(data)})
-  };
-
-  const [partner, setPartner] = useState();
-  const [loadPanelVisible, setloadPanelVisible] = useState(false);
 
   useEffect(() => {
     if (props._id && typeof props._id === "object" && props._id !== null) {

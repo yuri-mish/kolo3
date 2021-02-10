@@ -2,7 +2,7 @@ import { API_HOST } from "./../constants";
 import notify from "devextreme/ui/notify";
 
 export const filterObj = s => {
-  console.log(s);
+  console.log('filterObj:',s);
   if (!Array.isArray(s[0])) {
     var fld = s[0].split(".")[0];
     return {
@@ -52,6 +52,47 @@ export const convertToText = obj => {
   }
   return string.join(",");
 };
+
+export const docLoad = async (options,addOptions) => {
+const {cls_name,cls_fields}=addOptions
+  var filt = options.filter;
+  if (options.searchExpr && options.searchValue !== null) {
+    filt = [options.searchExpr, options.searchOperation, options.searchValue];
+  }
+    const _jsonFilter = filt?' jfilt:' + convertToText(filterObj(filt)):'';
+
+  var _offset = '';
+  if (options.skip) _offset = ` offset:${options.skip}`;
+  
+  var _limit = 100;
+  if (options.take) _limit = options.take;
+
+  var _userOptions = '';
+  if (options.userOptions)
+    _userOptions = ' options:' + convertToText(options.userOptions);
+
+  var _qT = '';
+  if (options.requireTotalCount)
+    _qT = `totalcount:${cls_name}(limit:1 ${_jsonFilter}${_userOptions} totalCount:1){totalcount}`;
+
+  const q = `{${_qT} ${cls_name}(limit:${_limit} ${_jsonFilter}${_offset}${_userOptions}){${cls_fields}}}`;
+
+  console.log(q);
+
+  return fetch(API_HOST, {
+    method: "POST",
+    credentials: "include",
+    body: JSON.stringify({ query: q }),
+    headers: { "Content-Type": "application/json" },
+  }).then(handleErrors).then(resp=>(resp.json()))
+  .then(resp=>({
+      data: resp.data[cls_name],
+      totalCount: options.requireTotalCount
+        ? resp.data.totalcount[0].totalcount
+        : undefined,
+  }))
+    
+  }
 
 export const catLoad =  async (options, cls_name, cls_fields) => {
   

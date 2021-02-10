@@ -17,42 +17,41 @@ import {
 import { v4 as uuid_v4 } from "uuid";
 
 import { API_HOST, uaFilterRowText } from "./../../constants";
-import { baseZIndex } from "devextreme/ui/overlay";
+
 const cls_name = "partners";
-const cls_fields =
-  "ref name edrpou id parent is_buyer is_supplier legal_address note name_full individual_legal inn";
+const cls_fields ="ref name edrpou id parent is_buyer is_supplier legal_address note name_full individual_legal inn";
 
 export const partnerDataSource = new CustomStore({
   key: "ref",
-  byKey: (ref) => {
-    if (!ref) return { ref: ref, name: "" };
-    const q = `{${cls_name} (ref:"${ref}" ) {${cls_fields} } }`;
+  byKey: ref => {
+    if (!ref) return { ref: '', name: '' };
+    const q = `{${cls_name} (ref:"${ref}") {${cls_fields}}}`;
     return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
       body: JSON.stringify({ query: q }),
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
+        "Accept": "application/json",
       },
     })
       .then(handleErrors)
-      .then((response) => response.json())
-      .then((response) => {
+      .then(response => response.json())
+      .then(response => {
         return response.data[cls_name].length === 0
-          ? { ref: ref, name: "" }
+          ? { ref: '', name: '' }
           : response.data[cls_name][0];
       });
   },
-  load: (options) => {
+  load: options => {
     if (options.filter&&options.filter[0]==='ref') 
       return partnerDataSource.byKey(options.filter[2])
-        return catLoad(options, cls_name, cls_fields);
+    return catLoad(options, cls_name, cls_fields);
   },
 });
 
-partnerDataSource.byEdrpou = async (edrpou) => {
-  const options = { filter: ["edrpou", "=", edrpou] };
+partnerDataSource.byEdrpou = async edrpou => {
+  const options = {filter: ["edrpou", "=", edrpou]};
   const res = await catLoad(options, cls_name, cls_fields);
   return res.data && res.data.length > 0 ? res.data[0] : undefined;
 };
@@ -63,7 +62,7 @@ export const PartnerBox = (props) => {
   let currentRowData = useRef().current;
   const ddbox = useRef();
   const dgrid = useRef();
-console.log(_partner)
+//console.log(_partner)
   // const currentRowData_byKeyAsync = async (key) => {
     
   // };
@@ -180,16 +179,16 @@ console.log(_partner)
         dataSource={partnerDataSource}
         onFocusedRowChanged={(e) => {
           if (e.row) currentRowData = e.row.data;
-          else currentRowData = { name: "", ref: "" };
+          else currentRowData = { name: '', ref: '' };
           //        console.log(e)
         }}
         hoverStateEnabled={true}
         //     focusedRowEnabled = {true}
         focusedRowKey={props.value}
-        onRowDblClick={(e) => {
+        onRowDblClick={e => {
           selectHandler(e.data);
         }}
-        onSelectionChanged={(e) => {
+        onSelectionChanged={e => {
           if (e.selectedRowsData.length) {
             currentRowData = e.selectedRowsData[0];
             //         setId(e.selectedRowsData[0].ref)

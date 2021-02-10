@@ -37,15 +37,31 @@ const showError = (message) => {
   notify({ message: message, position: { at: "center" } }, "error", 5000);
 };
 
-const customDataSource = new CustomStore({
+export const customDataSource = new CustomStore({
   key: "_id",
   update: (dat) => {
     console.log(dat);
   },
+  byKey:(key)=>{
+    customDataSource.load({ref:key})
+  },
+loadMode:"processed",
   load: (options) => {
- //   console.log("=Options:" + JSON.stringify(options));
-    const _jsonFilter = options.filter?' jfilt:'+convertToText(filterObj(options.filter)):''
+    console.log("=Options orders:" + JSON.stringify(options));
+    var filt = options.filter;
+    if (options.searchExpr && options.searchValue !== null) {
+      filt = [options.searchExpr, options.searchOperation, options.searchValue];
+    }
+      const _jsonFilter = filt?' jfilt:' + convertToText(filterObj(filt)):'';
+
+    //const _jsonFilter = options.filter?' jfilt:'+convertToText(filterObj(options.filter)):''
 //    console.log('_jsonFilter:',_jsonFilter)
+  
+    let _ref=''
+    if (options.ref){
+        _ref=` ref:${options.ref}`
+        options.take = 1
+    }  
     let _sort = '';
     if (options.sort) {
       const __sort = options.sort[0] 
@@ -65,13 +81,15 @@ const customDataSource = new CustomStore({
 
     var _qT = ``;
     if (options.requireTotalCount)
-      _qT = `totalcount:buyers_orders (limit:1${_search}${_jsonFilter} totalCount:1)  { totalcount} `;
+      _qT = `totalcount:buyers_orders (limit:1${_ref}${_search}${_jsonFilter} totalCount:1)  { totalcount} `;
 
-    var q = `{${_qT} buyers_orders(limit:${_limit}${_search}${_sort}${_offset}${_jsonFilter})
+    var q = `{${_qT} buyers_orders(limit:${_limit}${_ref}${_search}${_sort}${_offset}${_jsonFilter})
                     { 
                      _id
+                     ref
                      number_doc
                      date
+                     caption
                      doc_amount
                      paid
                      shipped
@@ -138,7 +156,10 @@ const Orders = () => {
   // const classes = useStyles();
 
   const editIconClick = (e) => {
-    history.push("/order/" + e.row.key.split("|")[1]);
+    if (e.row)
+    history.push("/order/" + e.row.key.split("|")[1])
+    else if (e.data)
+      history.push("/order/" + e.data.ref)
   };
 
   return (
@@ -210,9 +231,11 @@ const Orders = () => {
         allowSorting={true}
         remoteOperations={true}
         height={800}
+        
   //      focusedRowEnabled = {true}
 
         onRowClick = {setRow}
+        onRowDblClick = {editIconClick}
        // onFocusedRowChanged={setRow}
         //   onEditingStart={this.onEditingStart}
         //   onInitNewRow={this.onInitNewRow}

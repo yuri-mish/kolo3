@@ -10,6 +10,11 @@ export const navigation = [
     icon: 'car'
   },
   {
+    text: 'Акти',
+    path: '/acts',
+    icon: 'check'
+  },
+  {
     text: 'Довідка',
     icon: 'folder',
     items: [

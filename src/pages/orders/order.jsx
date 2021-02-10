@@ -91,11 +91,12 @@ const load = () => {
                 if (calcPrice < r.price && r.discount_percent_automatic === 0)
                   r.spec = calcPrice;
               });
+              setData(response.data.buyers_orders[0]);
             })
             .catch(() => {
               showError("Помилка заванатаження цін");
             });
-          setData(response.data.buyers_orders[0]);
+            setData(response.data.buyers_orders[0]);
         } else {
           loadPrices();
         }
@@ -132,8 +133,10 @@ const load = () => {
   })};
 
   useEffect(() => {
-    if (id&&id!=="new")
+    if (id&&id!=="new"){
       load()
+    }
+      
     else   
       loadPrices();
     nomsDataSource.userOptions.selectServices = true;
@@ -187,22 +190,22 @@ const load = () => {
   };
 
   const onchangeDate = param => {
-    setData((prevState) => ({
+    setData(prevState => ({
       ...prevState,
       date: moment(param.value).format("YYYY-MM-DDTHH:mm:ss"),
     }));
 
     loadPrices(moment(param.value).format("YYYY-MM-DDTHH:mm:ss"))
-      .then((prices) => {
-        data.services.forEach((row) => {
+      .then(prices => {
+        data.services.forEach(row => {
           var pricerow = prices.find(
-            (priceRow) => priceRow.nom === row.nom.ref
+            priceRow => priceRow.nom === row.nom.ref
           );
           row.price = pricerow ? pricerow.price : 0;
           calcrRow(row);
         });
       })
-      .catch((e) => {
+      .catch(e => {
         showError("Помилка завантаження прайсів");
       });
   };
@@ -216,18 +219,18 @@ const load = () => {
         row: data.services.length + 1,
         nom: { ref: undefined, name: "" },
       });
-      setData((prevState) => ({
+      setData(prevState => ({
         ...prevState,
         services: st,
       }));
     },
   };
 
-  const showError = (message) => {
+  const showError = message => {
     notify({ message: message, position: { at: "center" } }, "error", 5000);
   };
 
-  const cellTemplate = (r) => {
+  const cellTemplate = r => {
     return (
       <AutocompleteOTK
         value={r.data.text}
@@ -239,7 +242,7 @@ const load = () => {
           { dataField: "name", width: "80", caption: "Назва" },
           { dataField: "name_full", caption: "Повна назва" },
         ]}
-        onChange={(e) => {
+        onChange={e => {
           if (e) {
             const services = data.services.slice();
             services[r.data.rowIndex].nom.ref = e.ref || "";
@@ -255,8 +258,8 @@ const load = () => {
     );
   };
 
-  const changeReq = (e) => {
-    setData((prevState) => ({
+  const changeReq = e => {
+    setData(prevState => ({
       ...prevState,
       [e.element.id]: e.event.target.value,
     }));
@@ -291,7 +294,7 @@ const load = () => {
   return (
     <div>
       <Menu
-        onItemClick={async (e) => {
+        onItemClick={async e => {
           switch (e.itemData.id) {
             case "ok": {
               if (!formValidation()) return;
@@ -306,7 +309,7 @@ const load = () => {
               if (doctosave.responsible) delete doctosave.responsible;
               if (doctosave.number_doc) delete doctosave.number_doc;
 
-              doctosave.services.forEach((r) => {
+              doctosave.services.forEach(r => {
                 if (r.spec) delete r.spec;
                 if (r.nats) delete r.spec;
                 return (r.nom = r.nom.ref);
@@ -314,9 +317,7 @@ const load = () => {
               const q = JSON.stringify({
                 query: `mutation{setBuyersOrder(input:${convertToText(
                   doctosave
-                )}) {
-                    _id
-                      }}`,
+                )}) {_id}}`,
               });
 
               const response = await fetch(API_HOST, {
