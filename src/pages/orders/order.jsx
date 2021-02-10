@@ -16,9 +16,8 @@ import { v4 as uuid_v4 } from "uuid";
 import { PartnerBox } from "../../db/ds/dsPartners";
 import { nomsDataSource } from "../../db/ds/dsNoms";
 import { useParams } from "react-router-dom";
-import notify from "devextreme/ui/notify";
 import { useHistory } from "react-router-dom";
-import { convertToText } from "../../utils/filtfunc";
+import { convertToText, showError } from "../../utils/filtfunc";
 import { API_HOST, uaFilterRowText } from "./../../constants";
 import { AutocompleteOTK } from "../../components/otk/AutocompleteOTK";
 
@@ -136,7 +135,6 @@ const load = () => {
     if (id&&id!=="new"){
       load()
     }
-      
     else   
       loadPrices();
     nomsDataSource.userOptions.selectServices = true;
@@ -145,7 +143,6 @@ const load = () => {
   }, []);
 
   locale("ua"); //!!!!+++
-  //console.log("=" + data.date);
 
   const onQuantityChanged = (r) => {
     calcrRow(rowData);
@@ -173,9 +170,7 @@ const load = () => {
     }));
   };
   const onchangeNom = async (newData, value, currentRowData) => {
-    //console.log('=newData=',newData,'=value=',value,'=currentRowDatar=',currentRowData)
-    //var pricerow = 
-    currentRowData.price = prices.find(r=>(r.nom === value)).price||0;//pricerow ? pricerow.price : 0;
+     currentRowData.price = prices.find(r=>(r.nom === value)).price||0;//pricerow ? pricerow.price : 0;
     var res = await nomsDataSource.byKey(value);
     if (res) {
       currentRowData.content = res.name_full;
@@ -183,11 +178,8 @@ const load = () => {
     }
     currentRowData.nom.ref = value;
     currentRowData.amount = 0;
-
     calcrRow(currentRowData);
-
-    //console.log("price=", currentRowData.price);
-  };
+ };
 
   const onchangeDate = param => {
     setData(prevState => ({
@@ -224,10 +216,6 @@ const load = () => {
         services: st,
       }));
     },
-  };
-
-  const showError = message => {
-    notify({ message: message, position: { at: "center" } }, "error", 5000);
   };
 
   const cellTemplate = r => {
@@ -560,12 +548,11 @@ const load = () => {
             width={100}
             headerCellRender={(data) => {
               return (
-                <p
-                //style={{ 'font-size': '16px' }
+                <p className="aaa"
+                style={{ 'text-align': 'center' }}
                 >
-                  Ціна
-                  <br />
-                  (прайс){" "}
+                  Ціна<br />
+                  (прайс)
                 </p>
               );
             }}

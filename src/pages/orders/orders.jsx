@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/auth";
 //import "devextreme/dist/css/dx.common.css";
 //import "devextreme/dist/css/dx.light.css";
@@ -21,275 +21,262 @@ import { Menu } from "devextreme-react";
 // import { Popup } from 'devextreme-react';
 import { useHistory } from "react-router-dom";
 
-import {convertToText,filterObj, handleErrors} from '../../utils/filtfunc'
-import { API_HOST, uaFilterRowText } from './../../constants';
+import { convertToText, filterObj, handleErrors } from "../../utils/filtfunc";
+import { API_HOST, uaFilterRowText } from "./../../constants";
 import { partnerDataSource } from "../../db/ds/dsPartners";
 
-import { useSubscription, gql} from "@apollo/client";
-import { notify } from 'devextreme/ui/notify';
+import { useSubscription, gql } from "@apollo/client";
+import { notify } from "devextreme/ui/notify";
+import { dsBuyersOrders } from "../../db/ds/dsOrders";
 
+// export const customDataSource = new CustomStore({
+//   key: "_id",
+//   update: (dat) => {
+//     console.log(dat);
+//   },
+//   byKey:(key)=>{
+//     customDataSource.load({ref:key})
+//   },
+// loadMode:"processed",
+//   load: (options) => {
+//     console.log("=Options orders:" + JSON.stringify(options));
+//     var filt = options.filter;
+//     if (options.searchExpr && options.searchValue !== null) {
+//       filt = [options.searchExpr, options.searchOperation, options.searchValue];
+//     }
+//       const _jsonFilter = filt?' jfilt:' + convertToText(filterObj(filt)):'';
 
+//     //const _jsonFilter = options.filter?' jfilt:'+convertToText(filterObj(options.filter)):''
+// //    console.log('_jsonFilter:',_jsonFilter)
 
+//     let _ref=''
+//     if (options.ref){
+//         _ref=` ref:${options.ref}`
+//         options.take = 1
+//     }
+//     let _sort = '';
+//     if (options.sort) {
+//       const __sort = options.sort[0]
+//       _sort = ` sort:{selector:"${__sort.selector}" desc:"${__sort.desc}"}`;
+//     }
+//      let _search = ''
+//     // let _search =
+//     //   options.searchOperation && options.searchValue
+//     //     ? ', nameContaine:"' + options.searchValue + '"'
+//     //     : "";
 
+//     var _offset = '';
+//     if (options.skip) _offset = ` offset:${options.skip}`;
 
+//     var _limit = 50;
+//     if (options.take) _limit = options.take;
 
-const showError = (message) => {
-  notify({ message: message, position: { at: "center" } }, "error", 5000);
-};
+//     var _qT = ``;
+//     if (options.requireTotalCount)
+//       _qT = `totalcount:buyers_orders (limit:1${_ref}${_search}${_jsonFilter} totalCount:1)  { totalcount} `;
 
-export const customDataSource = new CustomStore({
-  key: "_id",
-  update: (dat) => {
-    console.log(dat);
-  },
-  byKey:(key)=>{
-    customDataSource.load({ref:key})
-  },
-loadMode:"processed",
-  load: (options) => {
-    console.log("=Options orders:" + JSON.stringify(options));
-    var filt = options.filter;
-    if (options.searchExpr && options.searchValue !== null) {
-      filt = [options.searchExpr, options.searchOperation, options.searchValue];
-    }
-      const _jsonFilter = filt?' jfilt:' + convertToText(filterObj(filt)):'';
+//     var q = `{${_qT} buyers_orders(limit:${_limit}${_ref}${_search}${_sort}${_offset}${_jsonFilter})
+//                     {
+//                      _id
+//                      ref
+//                      number_doc
+//                      date
+//                      caption
+//                      doc_amount
+//                      paid
+//                      shipped
+//                      note
+//                      partner {
+//                          _id ref name
+//                         }
 
-    //const _jsonFilter = options.filter?' jfilt:'+convertToText(filterObj(options.filter)):''
-//    console.log('_jsonFilter:',_jsonFilter)
-  
-    let _ref=''
-    if (options.ref){
-        _ref=` ref:${options.ref}`
-        options.take = 1
-    }  
-    let _sort = '';
-    if (options.sort) {
-      const __sort = options.sort[0] 
-      _sort = ` sort:{selector:"${__sort.selector}" desc:"${__sort.desc}"}`;
-    } 
-     let _search = ''
-    // let _search =
-    //   options.searchOperation && options.searchValue
-    //     ? ', nameContaine:"' + options.searchValue + '"'
-    //     : "";
-
-    var _offset = '';
-    if (options.skip) _offset = ` offset:${options.skip}`;
-
-    var _limit = 50;
-    if (options.take) _limit = options.take;
-
-    var _qT = ``;
-    if (options.requireTotalCount)
-      _qT = `totalcount:buyers_orders (limit:1${_ref}${_search}${_jsonFilter} totalCount:1)  { totalcount} `;
-
-    var q = `{${_qT} buyers_orders(limit:${_limit}${_ref}${_search}${_sort}${_offset}${_jsonFilter})
-                    { 
-                     _id
-                     ref
-                     number_doc
-                     date
-                     caption
-                     doc_amount
-                     paid
-                     shipped
-                     note
-                     partner { 
-                         _id ref name 
-                        } 
-
-                    }
-                 }`
-//  console.log ('=q=:',q)                 
-   return fetch(API_HOST, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({
-        query: q,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-     })
-      .then(handleErrors)
-      .then(response => (response.json()))
-      .then(data => {
-        if (data.errors) return { errors: data.errors[0] };
-        return {
-          data: data.data.buyers_orders,
-          totalCount: options.requireTotalCount
-              ? data.data.totalcount[0].totalcount
-              : undefined
-        }
-      }).catch(() => { showError('Помилка отримання списку документів')})
-  },
-  });
+//                     }
+//                  }`
+// //  console.log ('=q=:',q)
+//    return fetch(API_HOST, {
+//       method: "POST",
+//       credentials: "include",
+//       body: JSON.stringify({
+//         query: q,
+//       }),
+//       headers: {
+//         "Content-Type": "application/json",
+//         "Accept": "application/json"
+//       },
+//      })
+//       .then(handleErrors)
+//       .then(response => (response.json()))
+//       .then(data => {
+//         if (data.errors) return { errors: data.errors[0] };
+//         return {
+//           data: data.data.buyers_orders,
+//           totalCount: options.requireTotalCount
+//               ? data.data.totalcount[0].totalcount
+//               : undefined
+//         }
+//       }).catch(() => { showError('Помилка отримання списку документів')})
+//   },
+//   });
 
 const Orders = () => {
-  const refGrid = useRef()
-  const { user, signOut } = useAuth(); 
+  const refGrid = useRef();
+  const { user, signOut } = useAuth();
   const history = useHistory();
-  const [currRow,setCurrRow] = useState({ref:''})
+  const [currRow, setCurrRow] = useState({ ref: "" });
 
-  const sq = gql(`subscription{docChange(input:{username:"${user?user.email:''}"})}`)
-  const  {data: docChange,loading: loading_docChange} = useSubscription(sq);
-  
-    useEffect(() => {
-      refGrid.current.instance.refresh(true)
-     }, [docChange,loading_docChange]) 
+  const sq = gql(
+    `subscription{docChange(input:{username:"${user ? user.email : ""}"})}`
+  );
+  const { data: docChange, loading: loading_docChange } = useSubscription(sq);
 
-  customDataSource.on("loaded", result=>{
-    if (result.errors) signOut();
-  });
+  useEffect(() => {
+    refGrid.current.instance.refresh(true);
+  }, [docChange, loading_docChange]);
 
-  const setRow=(e)=>{
-    var r
-    if (e.row) r=e.row.data
-    if (e.data) r=e.data
-    if (r){
-      r.ref = r._id.split('|')[1]
-      setCurrRow(r)
-    }  
+  useEffect(() => {
+    dsBuyersOrders.on("loaded", (result) => {
+      if (result.errors) signOut();
+    });
+    return () => {};
+  }, []);
 
+  const setRow = useCallback((e) => {
+    var r;
+    if (e.row) r = e.row.data;
+    if (e.data) r = e.data;
+    if (r) {
+      if (!r.ref) r.ref = r._id.split("|")[1];
+      setCurrRow(r);
     }
+  }, []);
   // const classes = useStyles();
 
   const editIconClick = (e) => {
-    if (e.row)
-    history.push("/order/" + e.row.key.split("|")[1])
-    else if (e.data)
-      history.push("/order/" + e.data.ref)
+    if (e.row) history.push("/order/" + e.row.key);
+    else if (e.data) history.push("/order/" + e.data.ref);
   };
 
   return (
     <div height="6rem">
-    <Menu
-    onItemClick={e => {
-      switch(e.itemData.id){
-      case "new": { history.push("/order/new");
-                    break
-                  }
-      case "print": {
-            var windowObjectReference = null;
-            var winParam = '';// `width=${window.screen.width*8/10},left=${window.screen.width/10}`
-            windowObjectReference = window.open(e.itemData.url, "printwin",winParam)
-            windowObjectReference.focus()
-            break
+      <Menu
+        onItemClick={(e) => {
+          switch (e.itemData.id) {
+            case "new": {
+              history.push("/order/new");
+              break;
+            }
+            case "print": {
+              var windowObjectReference = null;
+              var winParam = ""; // `width=${window.screen.width*8/10},left=${window.screen.width/10}`
+              windowObjectReference = window.open(
+                e.itemData.url,
+                "printwin",
+                winParam
+              );
+              windowObjectReference.focus();
+              break;
+            }
+            default: {
+            }
           }
-          default:{}
-        }
-    }}
-    dataSource={[
-      {
-        text: "Додати",
-        id:"new"
-      },
-      {
-        text: "Закрити",
-      },
-      { text:"Друк",
-            icon:"print",
-              items:[
-                {
-                id:"print",
-                text:"Рахунок",
-                url:API_HOST+`/printform/${currRow.ref}/inv`,
-                disabled:!(currRow.ref&&currRow.number_doc),
+        }}
+        dataSource={[
+          {
+            text: "Додати",
+            id: "new",
+          },
+          {
+            text: "Закрити",
+          },
+          {
+            text: "Друк",
+            icon: "print",
+            items: [
+              {
+                id: "print",
+                text: "Рахунок",
+                url: API_HOST + `/printform/${currRow.ref}/inv`,
+                disabled: !(currRow.ref && currRow.number_doc),
               },
               {
-                id:"print",
-                text:"Договір",
-                url:API_HOST+`/printform/${currRow.ref}/dog`,
-                disabled:!(currRow.ref&&currRow.number_doc),
+                id: "print",
+                text: "Договір",
+                url: API_HOST + `/printform/${currRow.ref}/dog`,
+                disabled: !(currRow.ref && currRow.number_doc),
               },
               {
-                id:"print",
-                text:"Договір сертифікації",
-                url:API_HOST+`/printform/${currRow.ref}/dogs`,
-                disabled:!(currRow.ref&&currRow.number_doc),
+                id: "print",
+                text: "Договір сертифікації",
+                url: API_HOST + `/printform/${currRow.ref}/dogs`,
+                disabled: !(currRow.ref && currRow.number_doc),
               },
               {
-                id:"print",
-                text:"Договір для Казначейства",
-                url:API_HOST+`/printform/${currRow.ref}/dogk`,
-                disabled:!(currRow.ref&&currRow.number_doc),
+                id: "print",
+                text: "Договір для Казначейства",
+                url: API_HOST + `/printform/${currRow.ref}/dogk`,
+                disabled: !(currRow.ref && currRow.number_doc),
               },
-        ]
-      },  
-    ]}></Menu>
+            ],
+          },
+        ]}></Menu>
 
       <DataGrid
         id="gridContainer"
         highlightChanges={true}
-        
-        ref = {refGrid}
-        dataSource={customDataSource}
+        ref={refGrid}
+        dataSource={dsBuyersOrders}
         allowColumnReordering={true}
         allowColumnResizing={true}
         showBorders={true}
         allowSorting={true}
         remoteOperations={true}
         height={800}
-        
-  //      focusedRowEnabled = {true}
+        onRowClick={setRow}
+        onRowDblClick={editIconClick}>
+        <StateStoring enabled={true} type="localStorage" storageKey="orders" />
+        <Selection mode="single" />
+        <Scrolling mode="virtual" rowRenderingMode="virtual" />
+        <Paging pageSize={100} />
+        <FilterRow visible={true} {...uaFilterRowText} />
 
-        onRowClick = {setRow}
-        onRowDblClick = {editIconClick}
-       // onFocusedRowChanged={setRow}
-        //   onEditingStart={this.onEditingStart}
-        //   onInitNewRow={this.onInitNewRow}
-        //   onRowInserting={this.onRowInserting}
-        //   onRowInserted={this.onRowInserted}
-        //   onRowUpdating={this.onRowUpdating}
-        //   onRowUpdated={this.onRowUpdated}
-        //   onRowRemoving={this.onRowRemoving}
-        //   onRowRemoved={this.onRowRemoved}
-        //   onSaving={this.onSaving}
-        //   onSaved={this.onSaved}
-        //   onEditCanceling={this.onEditCanceling}
-        //   onEditCanceled={this.onEditCanceled}
-      >
-            <StateStoring enabled={true} type="localStorage" storageKey="orders" />
-            <Selection mode="single" />
-            <Scrolling mode="virtual" rowRenderingMode="virtual"  />
-            <Paging  pageSize={100} />
-            <FilterRow visible={true} {...uaFilterRowText}/>
-        
         <Column type="buttons" width={35}>
           <CButton name="_edit" icon="edit" onClick={editIconClick} />
         </Column>
 
-        <Column width={145}
+        <Column
+          width={145}
           dataField="number_doc"
           caption="Номер"
           dataType="string"
           alignment="center"
         />
-        <Column width={170}
+        <Column
+          width={170}
           dataField="date"
           caption="Дата"
           dataType="date"
           format="dd.MM.yyyy HH:mm:ss"
           alignment="center"
         />
-        <Column width={400}
-        allowSorting={false}
+        <Column
+          width={400}
+          allowSorting={false}
           dataField="partner.ref"
           caption="Контрагент"
           dataType="string"
           alignment="left"
-          calculateDisplayValue={data => (data.partner?.name)}>
-          <Lookup 
-            dataSource={partnerDataSource} allowClearing={true} 
+          calculateDisplayValue={(data) => data.partner?.name}>
+          <Lookup
+            dataSource={partnerDataSource}
+            allowClearing={true}
             valueExpr="ref"
             displayExpr="name"
             minSearchLength={3}
-            searchTimeout={500}>
-            </Lookup>
+            searchTimeout={500}></Lookup>
         </Column>
 
-        <Column width={100}
+        <Column
+          width={100}
           allowSorting={true}
           dataField="doc_amount"
           caption="Сума"
@@ -297,21 +284,23 @@ const Orders = () => {
           //format="currency"
           alignment="right"
         />
-        <Column width={100}
+        <Column
+          width={100}
           allowSorting={false}
           dataField="shipped"
           caption="Відвантажено"
           dataType="number"
           alignment="right"
         />
-        <Column width={100}
+        <Column
+          width={100}
           allowSorting={false}
           dataField="paid"
           caption="Сплачено"
           dataType="number"
           alignment="right"
         />
-        <Column 
+        <Column
           allowSorting={false}
           dataField="note"
           caption="Коментар"

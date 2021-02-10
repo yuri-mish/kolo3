@@ -1,9 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/auth";
-//import "devextreme/dist/css/dx.common.css";
-//import "devextreme/dist/css/dx.light.css";
 
-import CustomStore from "devextreme/data/custom_store";
 import DataGrid, {
   Selection,
   Paging,
@@ -19,64 +16,23 @@ import { Menu } from "devextreme-react";
 // import { useState, useRef } from 'react';
 // import { Order } from './order';
 // import { Popup } from 'devextreme-react';
-import { useHistory } from "react-router-dom";
+//import { useHistory } from "react-router-dom";
 
-import {catLoad, convertToText,docLoad,filterObj, handleErrors} from '../../utils/filtfunc'
+
 import { API_HOST, uaFilterRowText } from './../../constants';
 import { partnerDataSource } from "../../db/ds/dsPartners";
 
-import { useSubscription, gql} from "@apollo/client";
-import { notify } from 'devextreme/ui/notify';
+//import { useSubscription, gql} from "@apollo/client";
+//import { notify } from 'devextreme/ui/notify';
 import { actsDataSource } from './../../db/ds/dsActs';
-import { customDataSource as buyersOrdersDataSource} from "../orders/orders";
-import { AutocompleteOTK } from "../../components/otk/AutocompleteOTK";
+import { dsBuyersOrdersLookup } from "../../db/ds/dsOrders";
 
-const cls_name = 'buyers_orders'
-const cls_fields = ` ref number_doc `
-
-const bDataSource = new CustomStore({
-  key: "ref",
-  byKey: ref => {
-    if (!ref) return { ref: '', number_doc: '' };
-    const q = `{${cls_name} (ref:"${ref}") {${cls_fields}}}`;
-    return fetch(API_HOST, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({ query: q }),
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-    })
-      .then(handleErrors)
-      .then(response => response.json())
-      .then(response => {
-        return response.data[cls_name].length === 0
-          ? { ref: '', number_doc: '' }
-          : response.data[cls_name][0];
-      });
-  },
-  load: (options) => {
-    const addOptions = {cls_name:cls_name,
-      cls_fields:cls_fields,
-      }
-    if (options.filter&&options.filter[0]==='ref') return bDataSource.byKey(options.filter[2])
-//    return docLoad(options, addOptions);
-    return catLoad(options, cls_name,cls_fields);
-  },
-});
-
-
-
-const showError = (message) => {
-  notify({ message: message, position: { at: "center" } }, "error", 5000);
-};
 
 
 const Acts = (props) => {
   const refGrid = useRef()
-  const { user, signOut } = useAuth(); 
-  const history = useHistory();
+  const { signOut } = useAuth(); 
+//  const history = useHistory();
   const [currRow,setCurrRow] = useState({ref:''})
 
 //  const sq = gql(`subscription{docChange(input:{username:"${user?user.email:''}"})}`)
@@ -86,20 +42,25 @@ const Acts = (props) => {
     //   refGrid.current.instance.refresh(true)
     //  }, [docChange,loading_docChange]) 
 
-    actsDataSource.on("loaded", result=>{
+useEffect(() => {
+  actsDataSource.on("loaded", result=>{
     if (result.errors) signOut();
   });
+  return () => {
+      };
+}, [])
 
-  const setRow=(e)=>{
+  const setRow=useCallback((e)=>{
     var r
     if (e.row) r=e.row.data
     if (e.data) r=e.data
-    // if (r){
-    //   r.ref = r._id.split('|')[1]
+     if (r){
+       if(!r.ref)
+        r.ref = r._id.split('|')[1]
        setCurrRow(r)
-    // }  
-
-    }
+     }  
+    },[])
+    
   // const classes = useStyles();
 
   //const editIconClick = (e) => {
@@ -108,8 +69,9 @@ const Acts = (props) => {
 
   const cellOrderRender = useCallback((cellData)=>{
 //       console.log(cellData)
-       return (<div> <a href={'#/order/'+ cellData.data.trans.ref}>  {cellData.data.trans.caption} </a> </div>
- ); 
+      if (cellData&&cellData.data&&cellData.data.trans&&cellData.data.trans.ref)
+        return (<div> <a href={'#/order/'+ cellData.data.trans.ref}>  {cellData.data.trans.caption} </a> </div>)
+        else (<div> Документ недоступний </div>)
  },[])
 
 
@@ -165,24 +127,9 @@ const Acts = (props) => {
         allowSorting={true}
         remoteOperations={true}
         height={800}
-  //      focusedRowEnabled = {true}
-
         onRowClick = {setRow}
-       // onFocusedRowChanged={setRow}
-        //   onEditingStart={this.onEditingStart}
-        //   onInitNewRow={this.onInitNewRow}
-        //   onRowInserting={this.onRowInserting}
-        //   onRowInserted={this.onRowInserted}
-        //   onRowUpdating={this.onRowUpdating}
-        //   onRowUpdated={this.onRowUpdated}
-        //   onRowRemoving={this.onRowRemoving}
-        //   onRowRemoved={this.onRowRemoved}
-        //   onSaving={this.onSaving}
-        //   onSaved={this.onSaved}
-        //   onEditCanceling={this.onEditCanceling}
-        //   onEditCanceled={this.onEditCanceled}
-      >
-            {/* <StateStoring enabled={true} type="localStorage" storageKey="acts" /> */}
+        >
+            <StateStoring enabled={true} type="localStorage" storageKey="acts" /> 
             <Selection mode="single" />
             <Scrolling mode="virtual" rowRenderingMode="virtual"  />
             <Paging  pageSize={100} />
@@ -218,7 +165,7 @@ const Acts = (props) => {
             displayExpr="name"
             minSearchLength={3}
             searchTimeout={500}>
-            </Lookup>
+          </Lookup>
         </Column>
 
       
@@ -234,7 +181,7 @@ const Acts = (props) => {
           >
 
          <Lookup 
-            dataSource={buyersOrdersDataSource} allowClearing={true} 
+            dataSource={dsBuyersOrdersLookup} allowClearing={true} 
             valueExpr="ref"
             displayExpr="number_doc"
 //            displayExpr={(data)=>(`${data.number_doc} від ${data.date}`)}

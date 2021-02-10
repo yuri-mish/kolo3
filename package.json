@@ -13,6 +13,8 @@
     "apollo-link-ws": "^1.0.20",
     "devextreme": "^20.2.4",
     "devextreme-react": "20.2.3",
+    "lodash": "^4.17.20",
+    "lodash.uniqby": "^4.7.0",
     "moment": "^2.29.1",
     "node-sass": "^4.11.0",
     "react": "^17.0.1",

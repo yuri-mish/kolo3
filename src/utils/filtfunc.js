@@ -2,7 +2,7 @@ import { API_HOST } from "./../constants";
 import notify from "devextreme/ui/notify";
 
 export const filterObj = s => {
-  console.log('filterObj:',s);
+  // console.log('filterObj:',s);
   if (!Array.isArray(s[0])) {
     var fld = s[0].split(".")[0];
     return {
@@ -53,8 +53,8 @@ export const convertToText = obj => {
   return string.join(",");
 };
 
-export const docLoad = async (options,addOptions) => {
-const {cls_name,cls_fields}=addOptions
+export const docLoad = async (options,{cls_name,cls_fields}) => {
+
   var filt = options.filter;
   if (options.searchExpr && options.searchValue !== null) {
     filt = [options.searchExpr, options.searchOperation, options.searchValue];
