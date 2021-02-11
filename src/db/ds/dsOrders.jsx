@@ -14,7 +14,27 @@ export const dsBuyersOrders = new CustomStore({
   key: "ref",
   byKey: ref => {
     if (!ref) return { ref: '', number_doc: '' };
-    const q = `{${cls_name} (ref:"${ref}") {${cls_fields}}}`;
+    const q = `{${cls_name} (ref:"${ref}") {
+      _id
+      doc_amount
+      vat_included
+      number_doc
+      date
+      partner{ref name}
+      organization{ref name}
+      ClientPerson
+      ClientPersonPhone
+      responsible {ref name}
+      note
+      services {
+        nom {
+          _id
+          ref
+          name
+          name_full
+        }
+        row content price quantity amount discount_percent discount_percent_automatic gos_code vin_code vat_rate vat_amount
+      }}}`;
     return fetch(API_HOST, {
       method: "POST",
       credentials: "include",
@@ -49,7 +69,7 @@ export const dsBuyersOrdersLookup = new CustomStore({
   load: (options) => {
     options.addOptions = {
       cls_name:cls_name,
-      cls_fields: ` ref number_doc `,
+      cls_fields: ` ref number_doc date`,
       }
     return dsBuyersOrders.load(options).then(data=>{return orderBy(uniqBy(data.data,"number_doc"),['number_doc'],['asc'])})
    }

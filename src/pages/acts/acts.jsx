@@ -8,7 +8,7 @@ import DataGrid, {
   Scrolling,
   Column,
   Lookup,
-  Button as CButton,
+  //Button as CButton,
   StateStoring,
 } from "devextreme-react/data-grid";
 import { Menu } from "devextreme-react";
@@ -48,6 +48,7 @@ useEffect(() => {
   });
   return () => {
       };
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [])
 
   const setRow=useCallback((e)=>{
@@ -60,7 +61,7 @@ useEffect(() => {
        setCurrRow(r)
      }  
     },[])
-    
+
   // const classes = useStyles();
 
   //const editIconClick = (e) => {
@@ -186,7 +187,9 @@ useEffect(() => {
             displayExpr="number_doc"
 //            displayExpr={(data)=>(`${data.number_doc} від ${data.date}`)}
             minSearchLength={3}
-            searchTimeout={500}/>
+            searchTimeout={500}>
+            {/* <DataGrid dataSource={dsBuyersOrdersLookup} columns={['number_doc','date']} /> */}
+          </Lookup>  
           </Column>
 
           <Column width={100}

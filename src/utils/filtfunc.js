@@ -70,12 +70,24 @@ export const docLoad = async (options,{cls_name,cls_fields}) => {
   var _userOptions = '';
   if (options.userOptions)
     _userOptions = ' options:' + convertToText(options.userOptions);
+  
+    let _ref=''
+     if (options.ref){
+         _ref=` ref:${options.ref}`
+         options.take = 1
+     }
+
+  let _sort = '';
+     if (options.sort) {
+       const __sort = options.sort[0]
+       _sort = ` sort:{selector:"${__sort.selector}" desc:"${__sort.desc}"}`;
+     }
 
   var _qT = '';
   if (options.requireTotalCount)
-    _qT = `totalcount:${cls_name}(limit:1 ${_jsonFilter}${_userOptions} totalCount:1){totalcount}`;
+    _qT = `totalcount:${cls_name}(limit:1${_ref}${_jsonFilter}${_userOptions} totalCount:1){totalcount}`;
 
-  const q = `{${_qT} ${cls_name}(limit:${_limit} ${_jsonFilter}${_offset}${_userOptions}){${cls_fields}}}`;
+  const q = `{${_qT} ${cls_name}(limit:${_limit} ${_jsonFilter}${_offset}${_sort}${_ref}${_userOptions}){${cls_fields}}}`;
 
   console.log(q);
 

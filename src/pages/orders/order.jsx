@@ -18,8 +18,10 @@ import { nomsDataSource } from "../../db/ds/dsNoms";
 import { useParams } from "react-router-dom";
 import { useHistory } from "react-router-dom";
 import { convertToText, showError } from "../../utils/filtfunc";
-import { API_HOST, uaFilterRowText } from "./../../constants";
+//import { API_HOST, uaFilterRowText } from "./../../constants";
+import { API_HOST } from "./../../constants";
 import { AutocompleteOTK } from "../../components/otk/AutocompleteOTK";
+import { dsBuyersOrders } from "./../../db/ds/dsOrders";
 
 var _ = require("lodash");
 
@@ -30,113 +32,77 @@ export const Order = () => {
 
   let { id } = useParams();
 
-  const OrderSchema = useMemo(()=>({
-    date: moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss"),
-    number_doc: "",
-    class_name: "doc.buyers_order",
-    partner: { ref: "", name: "" },
-    services: [{ nom: { row: 1, ref: "", name: "" }, price: 0 }],
-    doc_amount: 0,
-    vat_included: true,
-    doc_currency: "",
-  }),[]);
+  const OrderSchema = useMemo(
+    () => ({
+      date: moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss"),
+      number_doc: "",
+      class_name: "doc.buyers_order",
+      partner: { ref: "", name: "" },
+      services: [{ nom: { row: 1, ref: "", name: "" }, price: 0 }],
+      doc_amount: 0,
+      vat_included: true,
+      doc_currency: "",
+    }),
+    []
+  );
 
   const [data, setData] = useState(OrderSchema);
   const [prices, setPrices] = useState();
 
-const load = () => {
-     fetch(API_HOST, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({
-        query: `{buyers_orders(ref:"${id}",limit:1) {
-                    _id
-                    doc_amount
-                    vat_included
-                    number_doc
-                    date
-                    partner{ref name}
-                    organization{ref name}
-                    ClientPerson
-                    ClientPersonPhone
-                    responsible {ref name}
-                    note
-                    services {
-                      nom {
-                        _id
-                        ref
-                        name
-                        name_full
-                      }
-                      row content price quantity amount discount_percent discount_percent_automatic gos_code vin_code vat_rate vat_amount
-                    }
-                  }
-                }`,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then(response => (response.json()))
-      .then(response => {
-        if (response.data.buyers_orders && response.data.buyers_orders.length > 0) {
-          loadPrices(response.data.buyers_orders[0].date)
-            .then((prices) => {
-              response.data.buyers_orders[0].services.forEach((r) => {
-                r.price = prices.find((p) => p.nom === r.nom.ref)?.price || 0;
-                const calcPrice = Math.round(r.amount / r.quantity, -2);
-                r.nats = r.spec = 0;
-                if (calcPrice > r.price) r.nats = calcPrice - r.price;
-                if (calcPrice < r.price && r.discount_percent_automatic === 0)
-                  r.spec = calcPrice;
-              });
-              setData(response.data.buyers_orders[0]);
-            })
-            .catch(() => {
-              showError("Помилка заванатаження цін");
+  const load = () => {
+    dsBuyersOrders.byKey(id)
+    .then(response => {
+      if (response && response.ref !== "") {
+        loadPrices(response.date)
+          .then(prices => {
+            response.services.forEach((r) => {
+              r.price = prices.find((p) => p.nom === r.nom.ref)?.price || 0;
+              const calcPrice = Math.round(r.amount / r.quantity, -2);
+              r.nats = r.spec = 0;
+              if (calcPrice > r.price) r.nats = calcPrice - r.price;
+              if (calcPrice < r.price && r.discount_percent_automatic === 0)
+                r.spec = calcPrice;
             });
-            setData(response.data.buyers_orders[0]);
-        } else {
-          loadPrices();
+            setData(response);
+          })
+          .catch(() => {
+            showError("Помилка заванатаження цін");
+          });
+      } else {
+        loadPrices();
+      }
+    });
+  };
+
+  const loadPrices = date => {
+    if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss");
+    return fetch(API_HOST, {
+      method:       "POST",
+      credentials:  "include",
+      body: JSON.stringify({
+        query:      `{prices (date:"${date}") { nom price currency vat_included }}`,
+      }),
+      headers:    {"Content-Type": "application/json"},
+    }).then(resp => resp.json())
+      .then(resp => {
+        //        console.log("=prices response:", data);
+        var pr = [];
+        if (resp.data.prices && resp.data.prices.length > 0) {
+          pr = resp.data.prices;
+          setData(prevState => ({...prevState,
+            vat_included: pr[0].vat_included === "true",
+            doc_currency: pr[0].currency,
+          }));
         }
+        setPrices(pr);
+        return pr;
       });
   };
 
-  const loadPrices =  date => {
-    if (!date) date = moment(Date.now()).format("YYYY-MM-DDTHH:mm:ss");
-    const dateParam = `(date:"${date}")`;
-     return fetch(API_HOST, {
-      method: "POST",
-      credentials: "include",
-      body: JSON.stringify({
-        query: `{prices ${dateParam} { nom price currency vat_included }}`,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-    .then(resp=>(resp.json()))
-    .then(resp=>{
-    //        console.log("=prices response:", data);
-      var pr = [];
-      if (resp.data.prices && resp.data.prices.length > 0) {
-      pr = resp.data.prices;
-      setData((prevState) => ({
-        ...prevState,
-        vat_included: pr[0].vat_included === "true",
-        doc_currency: pr[0].currency,
-      }));
-    }
-    setPrices(pr);
-    return pr;
-  })};
-
   useEffect(() => {
-    if (id&&id!=="new"){
-      load()
-    }
-    else   
-      loadPrices();
+    if (id && id !== "new") {
+      load();
+    } else loadPrices();
     nomsDataSource.userOptions.selectServices = true;
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,18 +125,20 @@ const load = () => {
     if (currentRowData.vat_rate === "НДС20")
       currentRowData.vat_amount = Math.round(currentRowData.amount / 6, -2);
     else currentRowData.vat_amount = 0;
-    data.services.forEach(r => {
+    data.services.forEach((r) => {
       doc_amount +=
         r.row === currentRowData.row ? currentRowData.amount : r.amount;
     });
     setData((prevState) => ({
       ...prevState,
       doc_amount: doc_amount,
-      services: prevState.services.map(row => ( row.row === currentRowData.row?currentRowData:row)),
+      services: prevState.services.map((row) =>
+        row.row === currentRowData.row ? currentRowData : row
+      ),
     }));
   };
   const onchangeNom = async (newData, value, currentRowData) => {
-     currentRowData.price = prices.find(r=>(r.nom === value)).price||0;//pricerow ? pricerow.price : 0;
+    currentRowData.price = prices.find((r) => r.nom === value).price || 0;
     var res = await nomsDataSource.byKey(value);
     if (res) {
       currentRowData.content = res.name_full;
@@ -179,17 +147,17 @@ const load = () => {
     currentRowData.nom.ref = value;
     currentRowData.amount = 0;
     calcrRow(currentRowData);
- };
+  };
 
-  const onchangeDate = param => {
-    setData(prevState => ({
+  const onchangeDate = (param) => {
+    setData((prevState) => ({
       ...prevState,
       date: moment(param.value).format("YYYY-MM-DDTHH:mm:ss"),
     }));
 
     loadPrices(moment(param.value).format("YYYY-MM-DDTHH:mm:ss"))
-      .then(prices => {
-        data.services.forEach(row => {
+      .then((prices) => {
+        data.services.forEach((row) => {
           var pricerow = prices.find(
             priceRow => priceRow.nom === row.nom.ref
           );
@@ -197,7 +165,7 @@ const load = () => {
           calcrRow(row);
         });
       })
-      .catch(e => {
+      .catch(() => {
         showError("Помилка завантаження прайсів");
       });
   };
@@ -211,10 +179,7 @@ const load = () => {
         row: data.services.length + 1,
         nom: { ref: undefined, name: "" },
       });
-      setData(prevState => ({
-        ...prevState,
-        services: st,
-      }));
+      setData(prevState => ({...prevState,services: st}));
     },
   };
 
@@ -233,13 +198,10 @@ const load = () => {
         onChange={e => {
           if (e) {
             const services = data.services.slice();
-            services[r.data.rowIndex].nom.ref = e.ref || "";
-            services[r.data.rowIndex].nom.name = e.name || "";
-            r.data.setValue(e.ref || "", e.name || "");
-            setData((prevState) => ({
-              ...prevState,
-              services: services,
-            }));
+            services[r.data.rowIndex].nom.ref = e.ref||'';
+            services[r.data.rowIndex].nom.name = e.name||'';
+            r.data.setValue(e.ref||'', e.name||'');
+            setData(prevState => ({...prevState,services: services}));
           }
         }}
       />
@@ -265,7 +227,7 @@ const load = () => {
       errorMessage += "Помилка: Таблична частина порожня\r\n";
     }
 
-    data.services.forEach((r) => {
+    data.services.forEach(r => {
       if (!r.nom || !r.nom.ref) {
         isValid = false;
         errorMessage += `Помилка: (рядок №${r.row}) - не заповнена послуга\r\n`;
@@ -297,7 +259,7 @@ const load = () => {
               if (doctosave.responsible) delete doctosave.responsible;
               if (doctosave.number_doc) delete doctosave.number_doc;
 
-              doctosave.services.forEach(r => {
+              doctosave.services.forEach((r) => {
                 if (r.spec) delete r.spec;
                 if (r.nats) delete r.spec;
                 return (r.nom = r.nom.ref);
@@ -395,8 +357,8 @@ const load = () => {
             Номер
           </div>
           <TextBox
-            readOnly={true}
             value={data.number_doc}
+            readOnly={true}
             placeholder="...номер документа..."
             hint="номер документу присвоєний головним офісом"
             width={250}
@@ -405,15 +367,14 @@ const load = () => {
             Дата
           </div>
           <DateBox
+            value={data.date}
             id="date"
             type="datetime"
-            value={data.date}
             displayFormat={"dd-MM-yyyy HH:mm:ss"}
             useMaskBehavior={true}
             onValueChanged={onchangeDate}
             hint="дата документу"
             width={350}
-            //                disabledDates={this.getDisabledDates}
           />
         </div>
       </div>
@@ -425,12 +386,12 @@ const load = () => {
 
         <PartnerBox
           value={data.partner?.ref}
-          onChange={(e) => {
-            setData((prevState) => ({
+          onChange={e => {
+            setData(prevState => ({
               ...prevState,
               partner: {
-                ref: e.ref||'',
-                name: e.name||'',
+                ref: e.ref || '',
+                name: e.name || '',
               },
             }));
           }}
@@ -481,45 +442,33 @@ const load = () => {
           columnResizingMode="widget"
           dataSource={data.services}
           hoverStateEnabled={true}
-          //activeStateEnabled = {true}
-          //selectedRowKeys={this.state.gridBoxValue}
           selectTextOnEditStart={true}
           onInitNewRow={(e) => {
             var st = data.services.slice();
-            //console.log("New row:", st);
             st.push({
               row: data.services.length + 1,
               nom: { ref: undefined, name: "" },
             });
-            setData((prevState) => ({
+            setData(prevState => ({
               ...prevState,
               services: st,
             }));
           }}
-          onEditorPrepared={(e) => {
+          onEditorPrepared={e => {
             rowData = e.row.data;
             if (e.dataField === "quantity") {
               e.editorElement.onchange = onQuantityChanged;
-              //console.log(e);
             }
           }}
-          onRowRemoved={(e) => {
-            //console.log("Row remove", e); //+++
-
-            var st = data.services.filter((row) => row.row !== e.data.row);
+          onRowRemoved={e => {
+            var st = data.services.filter(row => row.row !== e.data.row);
             var i = 1;
-            st.forEach((r) => {
-              r.row = i++;
-            });
-            setData((prevState) => ({
-              ...prevState,
-              services: st,
-            }));
+            st.forEach(r => r.row = i++);
+            setData(prevState => ({...prevState,services: st}));
           }}>
           <Editing
             mode="cell"
             allowUpdating={true}
-            //allowAdding={true}
             allowDeleting={true}
             useIcons={true}
             confirmDelete={false}>
@@ -528,7 +477,7 @@ const load = () => {
           <Column
             dataField="nom.ref"
             caption="Номенклатура"
-            calculateDisplayValue={(data) => {
+            calculateDisplayValue={data => {
               return data.nom?.name;
             }}
             setCellValue={onchangeNom}
@@ -541,50 +490,41 @@ const load = () => {
               <DataGrid dataSource={nomsDataSource} />
             </Lookup>
           </Column>
-          <Column
-            dataField="price"
+          <Column  dataField="price"
             caption="Ціна"
             allowEditing={false}
             width={100}
             headerCellRender={(data) => {
               return (
-                <p className="aaa"
-                style={{ 'text-align': 'center' }}
-                >
-                  Ціна<br />
-                  (прайс)
+                <p className="aaa" style={{ "text-align": "center" }}>
+                  Ціна <br /> (прайс)
                 </p>
               );
             }}
           />
-          <Column
-            dataField="quantity"
+          <Column dataField="quantity"
             caption="Кількість"
             width={80}
             allowEditing={true}
           />
-          <Column
-            dataField="spec"
+          <Column dataField="spec"
             caption="СпецЦіна"
             allowEditing={false}
             width={100}
           />
-          <Column
-            dataField="discount_percent_automatic"
+          <Column dataField="discount_percent_automatic"
             caption="%скидки"
             allowEditing={false}
             width={80}
           />
-          <Column
-            dataField="nats"
+          <Column dataField="nats"
             caption="Націнка"
             value={100}
             allowEditing={false}
             width={80}
           />{" "}
           {/* calculateCellValue={calcNats} */}
-          <Column
-            dataField="amount"
+          <Column  dataField="amount"
             caption="Сума"
             allowEditing={false}
             width={100}
@@ -608,9 +548,9 @@ const load = () => {
           Коментар
         </div>
         <TextBox
+          value={data.note}
           width="100%"
           id="note"
-          value={data.note}
           placeholder="коментар"
           onChange={changeReq}
         />

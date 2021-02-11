@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/auth";
 //import "devextreme/dist/css/dx.common.css";
 //import "devextreme/dist/css/dx.light.css";
 
-import CustomStore from "devextreme/data/custom_store";
+//import CustomStore from "devextreme/data/custom_store";
 import DataGrid, {
   Selection,
   Paging,
@@ -21,12 +21,12 @@ import { Menu } from "devextreme-react";
 // import { Popup } from 'devextreme-react';
 import { useHistory } from "react-router-dom";
 
-import { convertToText, filterObj, handleErrors } from "../../utils/filtfunc";
+//import { convertToText, filterObj, handleErrors } from "../../utils/filtfunc";
 import { API_HOST, uaFilterRowText } from "./../../constants";
 import { partnerDataSource } from "../../db/ds/dsPartners";
 
 import { useSubscription, gql } from "@apollo/client";
-import { notify } from "devextreme/ui/notify";
+//import { notify } from "devextreme/ui/notify";
 import { dsBuyersOrders } from "../../db/ds/dsOrders";
 
 // export const customDataSource = new CustomStore({
@@ -130,7 +130,8 @@ const Orders = () => {
   const { data: docChange, loading: loading_docChange } = useSubscription(sq);
 
   useEffect(() => {
-    refGrid.current.instance.refresh(true);
+    if (!loading_docChange)
+        refGrid.current.instance.refresh(true);
   }, [docChange, loading_docChange]);
 
   useEffect(() => {
@@ -138,6 +139,7 @@ const Orders = () => {
       if (result.errors) signOut();
     });
     return () => {};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setRow = useCallback((e) => {

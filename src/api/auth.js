@@ -19,8 +19,8 @@ const getAuth = async (user,pass) => {
     })
     .then((data) => {
 //      data.data.auth.branch = data.data.branch
-
-       return data.data.auth
+      if (data.data.auth) data.data.auth.isOk = true 
+       return data.data.auth||{isOk:false}
     }).catch((e)=>console.log('Ooops',e));
 
     return auth
@@ -55,8 +55,8 @@ export async function signIn(email, password) {
     //console.log(result, email, password);
 
     return {
-      isOk: result.ok,
-      message: result.ok ? '':'Помилка входу',
+      isOk: result.isOk,
+      message: result.isOk ? '':'Помилка входу',
       data: {
               email: email,
               avatarUrl: 'https://otk.in.ua/wp-content/uploads/2020/07/logo.svg',
