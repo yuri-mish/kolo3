@@ -71,7 +71,7 @@ export const PartnerBox = (props) => {
       if (props.value) set_Partner({ref:props.value})
   }, [props.value])
 
-
+  
   //  useEffect(() => {
   //    if (props.value) {
   //      partnerDataSource.byKey(props.value).then(newObj=>{
@@ -100,7 +100,8 @@ export const PartnerBox = (props) => {
     [props]
   );
 
-  const clickMenu = useCallback(
+  const clickMenu = 
+  //useCallback(
     (e) => {
       if (e.itemData.id === "open") setDialogOpen(true);
       if (e.itemData.id === "select") {
@@ -110,15 +111,17 @@ export const PartnerBox = (props) => {
       }
       if (e.itemData.id === "new") {
         currentRowData = { ref: uuid_v4() };
+        set_Partner(currentRowData)
+  //      props.value = currentRowData.ref;
         setDialogOpen(true);
       }
       if (e.itemData.id === "close") {
         ddbox.current.instance.close();
       }
       console.log(e);
-    },
-    [selectHandler]
-  );
+    }
+  //   ,[selectHandler]
+  // );
 
   return (
     <div style={{ display: "flex",width:'100%' }}>
@@ -225,7 +228,7 @@ export const PartnerBox = (props) => {
         title="-Контрагент-"
         width="75%">
        <Partner
-          _id={currentRowData ? currentRowData : props.value}
+          _id={_partner ? _partner : props.value}
         />
       </Popup>
       </div>

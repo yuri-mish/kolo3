@@ -115,9 +115,11 @@ export const Partner = (props) => {
 
   useEffect(() => {
     if (props._id && typeof props._id === "object" && props._id !== null) {
-      setPartner(props._id);
+      //setPartner(props._id); 
+      setP(props._id.ref);
+     
     } else if (props._id){
-         setP(props._id);
+      setP(props._id);
     }
   }, [props._id]);
 

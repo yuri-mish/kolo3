@@ -1,4 +1,4 @@
-import defaultUser from "../utils/default-user";
+//import defaultUser from "../utils/default-user";
 import { API_HOST } from "./../constants";
 
 const getAuth = async (user, pass) => {

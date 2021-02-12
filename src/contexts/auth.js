@@ -24,7 +24,7 @@ function AuthProvider(props) {
     return result;
   }, []);
 
-  const signOut = useCallback(() => {
+   const signOut = useCallback(() => {
     setUser();
   }, []);
 

@@ -1,5 +1,9 @@
 import { API_HOST } from "./../constants";
 import notify from "devextreme/ui/notify";
+import { createBrowserHistory } from 'history';
+
+
+
 
 export const filterObj = s => {
   // console.log('filterObj:',s);
@@ -87,7 +91,7 @@ export const docLoad = async (options,{cls_name,cls_fields}) => {
   if (options.requireTotalCount)
     _qT = `totalcount:${cls_name}(limit:1${_ref}${_jsonFilter}${_userOptions} totalCount:1){totalcount}`;
 
-  const q = `{${_qT} ${cls_name}(limit:${_limit} ${_jsonFilter}${_offset}${_sort}${_ref}${_userOptions}){${cls_fields}}}`;
+  const q = `{${_qT} ${cls_name}(limit:${_limit}${_jsonFilter}${_offset}${_sort}${_ref}${_userOptions}){${cls_fields}}}`;
 
   console.log(q);
 
@@ -97,14 +101,21 @@ export const docLoad = async (options,{cls_name,cls_fields}) => {
     body: JSON.stringify({ query: q }),
     headers: { "Content-Type": "application/json" },
   }).then(handleErrors).then(resp=>(resp.json()))
-  .then(resp=>({
+  .then(resp=>{
+      if  (resp.data[cls_name]===null){
+        const message = resp.errors?resp.errors[0].message:'Помилка отримання даних'
+        showError(message) 
+        createBrowserHistory().push('/#/login') 
+        window.location.reload();
+      }
+      return {
       data: resp.data[cls_name],
       totalCount: options.requireTotalCount
-        ? resp.data.totalcount[0].totalcount
+        ? resp.data?.totalcount[0]?.totalcount
         : undefined,
-  }))
-    
-  }
+      }
+    }) 
+ }
 
 export const catLoad =  async (options, cls_name, cls_fields) => {
   
@@ -126,9 +137,9 @@ export const catLoad =  async (options, cls_name, cls_fields) => {
 
   var _qT = '';
   if (options.requireTotalCount)
-    _qT = `totalcount:${cls_name}(limit:1 ${_jsonFilter}${_userOptions} totalCount:1){totalcount}`;
+    _qT = `totalcount:${cls_name}(limit:1${_jsonFilter}${_userOptions} totalCount:1){totalcount}`;
 
-  const q = `{${_qT} ${cls_name}(limit:${_limit} ${_jsonFilter}${_offset}${_userOptions}){${cls_fields}}}`;
+  const q = `{${_qT} ${cls_name}(limit:${_limit}${_jsonFilter}${_offset}${_userOptions}){${cls_fields}}}`;
 
   console.log(q);
 
@@ -137,13 +148,21 @@ export const catLoad =  async (options, cls_name, cls_fields) => {
     credentials: "include",
     body: JSON.stringify({ query: q }),
     headers: { "Content-Type": "application/json" },
-  }).then(handleErrors).then(resp=>(resp.json()))
-  .then(resp=>({
+  })
+  .then(handleErrors).then(resp=>(resp.json()))
+  .then(resp=>{
+      if  (resp.data[cls_name]===null){
+        const message = resp.errors&&(resp.errors[0]!==null)?resp.errors[0].message:'Помилка отримання даних'
+        showError(message) 
+        createBrowserHistory().push('/#/login') 
+        window.location.reload();
+      }
+      return {
       data: resp.data[cls_name],
       totalCount: options.requireTotalCount
-        ? resp.data.totalcount[0].totalcount
+        ? resp.data?.totalcount[0]?.totalcount
         : undefined,
-  }))
+      }})
     
 };
 
