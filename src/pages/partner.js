@@ -163,7 +163,7 @@ export const Partner = (props) => {
           switch (e.itemData.id) {
             case "save": {
               var doctosave = _.cloneDeep(partner);
-              var ref = doctosave.ref;
+              var ref = doctosave.ref||props._id.ref;
               if (!doctosave._id) {
                 doctosave._id = "cat.partners|" + ref;
                 doctosave.class_name = "cat.partners";
